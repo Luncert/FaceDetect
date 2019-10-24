@@ -1,11 +1,11 @@
 package main
 
 import (
+	"errors"
 	log "github.com/Luncert/slog"
 	"github.com/gwuhaolin/livego/av"
 	"github.com/gwuhaolin/livego/protocol/rtmp/cache"
 	cmap "github.com/orcaman/concurrent-map"
-	"github.com/pkg/errors"
 	"sync"
 	"time"
 )
@@ -20,7 +20,7 @@ type RtmpStreamHandler struct {
 	channels cmap.ConcurrentMap //key
 }
 
-func NewAInvoker() *RtmpStreamHandler {
+func NewRtmpStreamHandler() *RtmpStreamHandler {
 	ret := &RtmpStreamHandler{
 		channels: cmap.New(),
 	}
@@ -80,9 +80,17 @@ func (as *RtmpStreamHandler) GetWriter(info av.Info) av.WriteCloser {
 	return nil
 }
 
+func (as *RtmpStreamHandler) Close() {
+	for item := range as.channels.IterBuffered() {
+		c := item.Val.(*Channel)
+		c.Stop()
+	}
+}
+
 // TODO: handle av.Info
 // Channel is a structure with only one writer and one reader
 type Channel struct {
+	working    bool
 	stopSignal chan bool
 	info       av.Info
 	cache      *cache.Cache
@@ -93,6 +101,7 @@ type Channel struct {
 
 func NewChannel(info av.Info, producer av.ReadCloser) *Channel {
 	return &Channel{
+		working:    false,
 		stopSignal: make(chan bool),
 		info:       info,
 		cache:      nil,
@@ -121,22 +130,14 @@ func (c *Channel) SetConsumer(consumer av.WriteCloser) {
 	}
 }
 
-// CheckAlive returns true if both of the writer and reader are died, else false
-func (c *Channel) IsAlive() (alive bool) {
-	if c.producer != nil && c.producer.Alive() {
-		alive = true
-	}
-	if c.consumer != nil && c.consumer.Alive() {
-		alive = true
-	}
-	return
-}
-
 func (c *Channel) Start() {
 	go c.transport()
 }
 
 func (c *Channel) transport() {
+	c.setWorking(true)
+	defer c.setWorking(false)
+
 	log.Info("Transport start:", c.info)
 
 	// No StartStaticPush there, I think static push is to copy
@@ -151,6 +152,7 @@ func (c *Channel) transport() {
 			return
 		default:
 			if err = c.producer.Read(&p); err != nil {
+				c.closeResource(errors.New("read error"))
 				return
 			}
 			// output packet
@@ -172,31 +174,74 @@ func (c *Channel) transport() {
 	}
 }
 
+func (c *Channel) setWorking(working bool) {
+	c.lock.Lock()
+	c.working = working
+	c.lock.Unlock()
+}
+
+func (c *Channel) closeResource(err error) {
+	c.lock.Lock()
+	if c.producer != nil {
+		c.producer.Close(err)
+		c.producer = nil
+	}
+	if c.consumer != nil {
+		c.consumer.Close(err)
+		c.consumer = nil
+	}
+	c.lock.Unlock()
+}
+
+// CheckAlive returns true if both of the writer and reader are died, else false
+func (c *Channel) IsAlive() (alive bool) {
+	if c.producer != nil {
+		if c.producer.Alive() {
+			alive = true
+		} else {
+			c.producer.Close(errors.New("read timeout"))
+		}
+	}
+	if c.consumer != nil {
+		if c.consumer.Alive() {
+			alive = true
+		} else {
+			c.consumer.Close(errors.New("write timeout"))
+		}
+	}
+	return
+}
+
 func (c *Channel) Pause() {
 	c.lock.Lock()
-	c.stopSignal <- true
-	c.lock.Unlock()
+	defer c.lock.Unlock()
+	if !c.working {
+		return
+	}
 
-	log.Info("channel transport paused:", c.info)
+	// it's possible that we get lock before transport loop,
+	// so we must release lock before sending stop signal,
+	// because this is a blocking operation (no buffer channel)
+	c.lock.Unlock()
+	// once send stopSignal succeed, transport must have exited
+	// because c.stopSignal has no buffer
+	c.stopSignal <- true
+	c.lock.Lock()
+
+	log.Info("channel paused:", c.info)
 }
 
 func (c *Channel) Stop() {
 	c.lock.Lock()
-	c.stopSignal <- true
-	// once send stopSignal succeed, transport must have exited
-	// because c.stopSignal has no buffer
-
-	if c.producer != nil {
-		c.producer.Close(errors.New("stop old"))
-		c.producer = nil
+	defer c.lock.Unlock()
+	if !c.working {
+		return
 	}
-	if c.consumer != nil {
-		c.consumer.Close(errors.New("closed"))
-		c.consumer = nil
-	}
-	log.Info("channel closed:", c.info)
 
 	c.lock.Unlock()
+	c.stopSignal <- true
+	c.lock.Lock()
 
-	log.Info("channel transport stopped:", c.info)
+	c.closeResource(errors.New("normal stop"))
+	log.Info("channel closed:", c.info)
 }

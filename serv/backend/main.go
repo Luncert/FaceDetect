@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gwuhaolin/livego/av"
+	"github.com/gwuhaolin/livego/configure"
 	"github.com/gwuhaolin/livego/protocol/rtmp"
 	"net"
 	"os"
@@ -30,8 +31,13 @@ func main() {
 	log.InitLogger("./logger.yml")
 	defer log.DestroyLogger()
 
-	stream := NewAIStream()
-	startRtmp(stream)
+	if err := configure.LoadConfig("app.cfg"); err != nil {
+		log.Error(err)
+		return
+	}
+	handler := NewRtmpStreamHandler()
+	handler.Close()
+	startRtmp(handler)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
