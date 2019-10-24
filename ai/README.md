@@ -9,10 +9,10 @@
 ## 人脸检测
 `face_api.py`中的`detect()`
 ```py
-def detect(filename, config='./cascades/haarcascade_frontalface_default.xml'):
+def detect(gray, config='./cascades/haarcascade_frontalface_default.xml'):
     """人脸检测api
     Args:
-        filename: str, 待检测的图片
+        gray: ndarray, 待检测的图片 要求为灰度图
         config: str, 级联检测器的配置文件
     Returns:
         faces: List[List[float, float, float, float]]
