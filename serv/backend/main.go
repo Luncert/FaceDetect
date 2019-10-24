@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gwuhaolin/livego/av"
-	"github.com/gwuhaolin/livego/protocol/httpflv"
 	"github.com/gwuhaolin/livego/protocol/rtmp"
 	"net"
 	"os"
@@ -15,8 +14,7 @@ import (
 )
 
 var (
-	rtmpAddr    = flag.String("rtmp-addr", ":1935", "RTMP server listen address")
-	httpFlvAddr = flag.String("httpflv-addr", ":7001", "HTTP-FLV server listen address")
+	rtmpAddr = flag.String("rtmp-addr", ":1935", "RTMP server listen address")
 )
 
 func main() {
@@ -34,7 +32,6 @@ func main() {
 
 	stream := NewAIStream()
 	startRtmp(stream)
-	startHTTPFlv(stream)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -57,22 +54,4 @@ func startRtmp(handler av.Handler) {
 
 	log.Info("RTMP Listen On", *rtmpAddr)
 	_ = rtmpServer.Serve(rtmpListen)
-}
-
-func startHTTPFlv(h av.Handler) {
-	flvListen, err := net.Listen("tcp", *httpFlvAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	hdlServer := httpflv.NewServer(h)
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Error("HTTP-FLV server panic: ", r)
-			}
-		}()
-		log.Info("HTTP-FLV listen On", *httpFlvAddr)
-		_ = hdlServer.Serve(flvListen)
-	}()
 }
