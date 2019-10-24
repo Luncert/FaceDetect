@@ -1,128 +1,78 @@
 package main
 
 import (
-	"bytes"
-	"encoding/base64"
-	"github.com/gorilla/websocket"
-	"image"
-	"image/png"
-	"net/http"
+	"flag"
+	"fmt"
+	"github.com/gwuhaolin/livego/av"
+	"github.com/gwuhaolin/livego/protocol/httpflv"
+	"github.com/gwuhaolin/livego/protocol/rtmp"
+	"net"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/Luncert/slog"
-	"github.com/gorilla/mux"
+)
+
+var (
+	rtmpAddr    = flag.String("rtmp-addr", ":1935", "RTMP server listen address")
+	httpFlvAddr = flag.String("httpflv-addr", ":7001", "HTTP-FLV server listen address")
 )
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("server panic: ", r)
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	flag.Parse()
+
 	log.InitLogger("./logger.yml")
 	defer log.DestroyLogger()
 
-	s := NewHTTPServer(":10800")
-	go s.Start()
-	defer s.Stop()
+	stream := NewAIStream()
+	startRtmp(stream)
+	startHTTPFlv(stream)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
 }
 
-// HTTPServer ...
-type HTTPServer struct {
-	addr   string
-	router *mux.Router
-	server *http.Server
-}
-
-// NewHTTPServer ...
-func NewHTTPServer(addr string) *HTTPServer {
-	r := mux.NewRouter()
-	s := &http.Server{
-		Addr:    addr,
-		Handler: r,
-	}
-	return &HTTPServer{
-		addr:   addr,
-		router: r,
-		server: s,
-	}
-}
-
-var imgChan = make(chan image.Image, 1)
-
-// Start ...
-func (s *HTTPServer) Start() {
-	s.router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := w.Write([]byte("Hi.")); err != nil {
-			log.Error(err)
-		}
-	})
-	s.router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serverWs(w, r)
-	})
-	log.Info("Server started at", s.addr)
-	// ListenAndServe only returns
-	if err := s.server.ListenAndServe(); err != nil {
-		if err != http.ErrServerClosed {
-			log.Fatal(err)
-		}
-	}
-}
-
-// Stop ...
-func (s *HTTPServer) Stop() {
-	if err := s.server.Close(); err != nil {
-		log.Fatal("Stop server failed", err)
-	} else {
-		log.Info("Server stopped")
-	}
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-func serverWs(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+func startRtmp(handler av.Handler) {
+	rtmpListen, err := net.Listen("tcp", *rtmpAddr)
 	if err != nil {
-		log.Error(err)
-		return
-	}
-	defer func() {
-		_ = conn.Close()
-	}()
-	for {
-		_, message, err := conn.ReadMessage()
-		if err != nil {
-			log.Error("read:", err)
-			break
-		}
-		src := decodeDataUrl(message)
-		img, err := png.Decode(bytes.NewReader(src))
-		if err != nil {
-			log.Fatal(err)
-		} else {
-			imgChan <- img
-		}
-		//err = conn.WriteMessage(msgType, message)
-	}
-}
-
-func decodeDataUrl(raw []byte) []byte {
-	i := 0
-	for raw[i] != ',' {
-		i++
-	}
-	i++
-	src := raw[i:]
-	maxLen := base64.StdEncoding.DecodedLen(len(src))
-	dst := make([]byte, maxLen)
-	if _, err := base64.StdEncoding.Decode(dst, src); err != nil {
 		log.Fatal(err)
 	}
-	return dst
+
+	rtmpServer := rtmp.NewRtmpServer(handler, nil)
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("RTMP server panic: ", r)
+		}
+	}()
+
+	log.Info("RTMP Listen On", *rtmpAddr)
+	_ = rtmpServer.Serve(rtmpListen)
+}
+
+func startHTTPFlv(h av.Handler) {
+	flvListen, err := net.Listen("tcp", *httpFlvAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	hdlServer := httpflv.NewServer(h)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Error("HTTP-FLV server panic: ", r)
+			}
+		}()
+		log.Info("HTTP-FLV listen On", *httpFlvAddr)
+		_ = hdlServer.Serve(flvListen)
+	}()
 }
