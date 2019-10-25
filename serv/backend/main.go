@@ -31,7 +31,7 @@ func main() {
 	log.InitLogger("./logger.yml")
 	defer log.DestroyLogger()
 
-	if err := configure.LoadConfig("app.cfg"); err != nil {
+	if err := configure.LoadConfig("config.json"); err != nil {
 		log.Error(err)
 		return
 	}

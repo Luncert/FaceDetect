@@ -50,10 +50,11 @@ func (as *RtmpStreamHandler) HandleReader(rc av.ReadCloser) {
 		channel, _ = tmp.(*Channel)
 		id := channel.ID()
 		// check if this channel's producer is as same as the param
-		if id != EmptyID && id != info.UID {
-			channel.Pause()
-			channel.producer = rc
+		if id == EmptyID || id == info.UID {
+			return
 		}
+		channel.Pause()
+		channel.producer = rc
 	} else {
 		channel = NewChannel(info, rc)
 		as.channels.Set(info.Key, channel)
@@ -104,7 +105,7 @@ func NewChannel(info av.Info, producer av.ReadCloser) *Channel {
 		working:    false,
 		stopSignal: make(chan bool),
 		info:       info,
-		cache:      nil,
+		cache:      cache.NewCache(),
 		lock:       new(sync.Mutex),
 		producer:   producer,
 		consumer:   nil,
@@ -158,13 +159,13 @@ func (c *Channel) transport() {
 			// output packet
 			c.lock.Lock()
 			if c.consumer == nil {
-				if err = c.consumer.Write(&p); err != nil {
-					log.Error(c.consumer.Info(), "write packet error:", err)
-					c.consumer = nil
-				} else {
+				if err = c.consumer.Write(&p); err == nil {
 					// write consumer succeed, no need to do cache
 					c.lock.Unlock()
 					continue
+				} else {
+					log.Error(c.consumer.Info(), "write packet error:", err)
+					c.consumer = nil
 				}
 			}
 			// save packet to cache
