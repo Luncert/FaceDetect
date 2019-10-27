@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"github.com/Luncert/FaceDetect/serv/backend/av"
+	"github.com/Luncert/FaceDetect/serv/backend/rtmp/cache"
 	log "github.com/Luncert/slog"
-	"github.com/gwuhaolin/livego/av"
-	"github.com/gwuhaolin/livego/protocol/rtmp/cache"
 	cmap "github.com/orcaman/concurrent-map"
 	"sync"
 	"time"

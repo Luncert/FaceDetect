@@ -2,16 +2,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"github.com/gwuhaolin/livego/av"
-	"github.com/gwuhaolin/livego/configure"
-	"github.com/gwuhaolin/livego/protocol/rtmp"
+	"github.com/Luncert/FaceDetect/serv/backend/av"
+	"github.com/Luncert/FaceDetect/serv/backend/rtmp"
+	"github.com/Luncert/slog"
 	"net"
 	"os"
 	"os/signal"
-	"time"
-
-	"github.com/Luncert/slog"
 )
 
 var (
@@ -19,27 +15,16 @@ var (
 )
 
 func main() {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("server panic: ", r)
-			time.Sleep(1 * time.Second)
-		}
-	}()
-
 	flag.Parse()
 
 	log.InitLogger("./logger.yml")
 	defer log.DestroyLogger()
 
-	if err := configure.LoadConfig("config.json"); err != nil {
-		log.Error(err)
-		return
-	}
 	handler := NewRtmpStreamHandler()
-	handler.Close()
+	defer handler.Close()
 	startRtmp(handler)
 
-	c := make(chan os.Signal, 1)
+	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt)
 	<-c
 }
