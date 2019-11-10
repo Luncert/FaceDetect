@@ -13,8 +13,7 @@ def discern(img):
     if len(faceRects):
         # 框出人脸，合并写
         for (x, y, w, h) in faceRects:
-            cv2.rectangle(img, (x, y), (x + h, y + w), (0, 255, 0)
-                          , 2)
+            cv2.rectangle(img, (x, y), (x + h, y + w), (0, 255, 0), 2)
     cv2.imshow("Image", img)
 
 
