@@ -2,6 +2,8 @@ const conf = require('./smipc_conf.json')
 const smipc = require('smipc')
 const { parentPort } = require('worker_threads')
 
+let INT_SZ = 4
+
 class FrameReceiver {
     constructor(isTraceMode) {
         smipc.init(isTraceMode)
@@ -11,21 +13,28 @@ class FrameReceiver {
     }
 
     readFrame() {
-        let frame = {
-            width: undefined,
-            height: undefined,
-            data: undefined
+        let frame = {}
+        // read shape size
+        let buf = new Uint8Array(INT_SZ)
+        this._readN(buf, INT_SZ)
+        let shapeSz = this._parseBytesToInt(buf, 0, INT_SZ)
+        if (shapeSz == 0) {
+            // received stop signal
+            return null
+        } else if (shapeSz != 3) {
+            throw new Error(`Unsupported frame format, shapeSz=${shapeSz}.`)
         }
         // read shape
-        let buf = new Uint8Array(8)
-        this._readN(buf, 8)
-        frame.height = this._parseBytesToInt(buf, 0, 4)
-        frame.width = this._parseBytesToInt(buf, 4, 4)
-        if (frame.height == 0 && frame.width == 0) {
-            return null
+        buf = new Uint8Array(shapeSz * INT_SZ)
+        this._readN(buf, buf.length)
+        frame.height = this._parseBytesToInt(buf, 0, INT_SZ)
+        frame.width = this._parseBytesToInt(buf, 4, INT_SZ)
+        frame.pixelSize = this._parseBytesToInt(buf, 8, INT_SZ)
+        if (frame.pixelSize != 4) {
+            throw new Error(`Unsupported frame format, pixel size=${frame.pixelSize}.`)
         }
         // read data
-        let sz = frame.width * frame.height
+        let sz = frame.width * frame.height * frame.pixelSize
         frame.data = new Uint8Array(sz)
         this._readN(frame.data, sz)
         return frame
@@ -50,18 +59,18 @@ class FrameReceiver {
     }
 
     close() {
-        if (!smipc.closeChannel(conf.cid)) {
-            console.warn(`Failed to close channel(${conf.cid})`)
-        }
+        smipc.closeChannel(conf.cid)
         smipc.deinit()
     }
 }
 
-let fr = new FrameReceiver(true)
-let frame
-while ((frame = fr.readFrame()) != null) {
-    parentPort.postMessage(frame)
+let fr = new FrameReceiver(smipc.LOG_ALL)
+try {
+    let frame
+    while ((frame = fr.readFrame()) != null) {
+        parentPort.postMessage(frame)
+    }
+} finally {
+    fr.close()
+    console.log('Frame Transport stopped.')
 }
-fr.close()
-
-console.log('Frame Transport stopped.')

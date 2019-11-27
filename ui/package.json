@@ -17,9 +17,11 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {},
-  "engines" : { "node" : ">=10.5.0" },
+  "engines": {
+    "node": ">=10.5.0"
+  },
   "dependencies": {
     "electron": "^7.1.2",
-    "smipc": "^1.0.24"
+    "smipc": "^1.0.30"
   }
 }

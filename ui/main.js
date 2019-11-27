@@ -26,13 +26,14 @@ function createWindow () {
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
 
-  let w = new Worker('./frame_transport.js')
-  w.on('message', (frame) => {
-    mainWindow.webContents.send('frame', frame)
-  })
+  // let ft = new Worker('./frame_transport.js')
+  // ft.on('message', (frame) => {
+  //   mainWindow.webContents.send('frame', frame)
+  // })
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
+    // TODO: stop worker
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.

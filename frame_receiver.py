@@ -7,7 +7,7 @@ with open('smipc_conf.json', 'rb') as f:
     conf = f.read().decode('utf8')
 conf = json.loads(conf)
 
-smipc.init_library()
+smipc.init_library(smipc.LOG_ALL)
 with FrameTransport(conf['cid'], smipc.CHAN_R, conf['chanSz']) as ft:
     count = 200
     while count > 0:

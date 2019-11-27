@@ -27,15 +27,15 @@ with open('smipc_conf.json', 'rb') as f:
     conf = f.read().decode('utf8')
 conf = json.loads(conf)
 
-smipc.init_library()
+smipc.init_library(smipc.LOG_ALL)
 source = cv2.VideoCapture('demo.mp4')
 with FrameTransport(conf['cid'], smipc.CHAN_W, conf['chanSz']) as ft:
-    count = 1
+    count = 200
     while count > 0:
         _, f = source.read()
-        gray = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
-        time.sleep(0.010)
-        ft.send_frame(gray)
+        f = cv2.cvtColor(f, cv2.COLOR_BGR2BGRA)
+        time.sleep(0.025)
+        ft.send_frame(f)
         count -= 1
 source.release()
 smipc.clean_library()

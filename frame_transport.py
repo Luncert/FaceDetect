@@ -2,40 +2,55 @@ import smipc
 import ctypes
 import numpy as np
 
+INT_SZ = 4
+
 
 class FrameTransport(smipc.Channel):
     def send_frame(self, frame):
         if not isinstance(frame, np.ndarray):
             raise Exception('Invalid param, frame must be instance of np.ndarray.')
-        if not len(frame.shape) is 2:
-            raise Exception('Invalid param, frame must be 2 dimensional np.ndarray.')
         s = frame.shape
         # write shape
-        buf = bytearray(8)
-        self.int_bytes(s[0], buf, 0, 4)
-        self.int_bytes(s[1], buf, 4, 4)
+        img_sz = 1
+        shape_sz = len(s)
+        buf = bytearray((shape_sz + 1) * INT_SZ)
+        self.int_bytes(shape_sz, buf, 0, INT_SZ)
+        for i in range(shape_sz):
+            self.int_bytes(s[i], buf, INT_SZ * (i + 1), INT_SZ)
+            img_sz *= s[i]
         self.write(buf)
         # write data
-        data = frame.reshape(s[0] * s[1]).tostring()
+        data = frame.reshape(img_sz).tostring()
         self.write(data)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # send stop signal: (0, 0)
-        self.write(bytearray(8))
+        # send stop signal: 0x00
+        if self.mode == smipc.CHAN_W:
+            self.write(bytearray(INT_SZ))
         super().__exit__(exc_type, exc_val, exc_tb)
 
     def read_frame(self):
-        # read shape
-        buf = ctypes.c_buffer(8)
-        self.read(buf, 8, True)
-        s = (self.bytes_int(buf, 0, 4), self.bytes_int(buf, 4, 4))
+        # read shape size
+        buf = ctypes.c_buffer(INT_SZ)
+        self.read(buf, INT_SZ, True)
+        shape_sz = self.bytes_int(buf, 0, INT_SZ)
+        if shape_sz == 0:
+            # received stop signal
+            return None
+        # read shape to calculate image size
+        img_sz = 1
+        shape = []
+        buf = ctypes.c_buffer(shape_sz * INT_SZ)
+        self.read(buf, len(buf), True)
+        for i in range(shape_sz):
+            shape.append(self.bytes_int(buf, i * INT_SZ, INT_SZ))
+            img_sz *= shape[i]
         # read data
-        sz = s[0] * s[1]
-        buf = ctypes.create_string_buffer(sz)
-        n = self.read(buf, sz, True)
-        if n != sz:
-            raise Exception('%d bytes expected, only read %d.' % (sz, n))
-        frame = np.frombuffer(buf, dtype=np.uint8).reshape(s[0], s[1])
+        buf = ctypes.create_string_buffer(img_sz)
+        n = self.read(buf, img_sz, True)
+        if n != img_sz:
+            raise Exception('%d bytes expected, only read %d.' % (img_sz, n))
+        frame = np.frombuffer(buf, dtype=np.uint8).reshape(*shape)
         return frame
 
     @staticmethod
