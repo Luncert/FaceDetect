@@ -1,8 +1,3 @@
-.App {
-  width: 100%;
-  height: 100%;
-}
-
 .App-Background {
   position: absolute;
   width: calc(100% + 10px);
@@ -12,41 +7,38 @@
   background-image: url('./res/bg.png');
   background-size: cover;
   filter: blur(3px);
+  z-index: -1;
 }
 
-.App-Container {
-  position: relative;
-  width: 1200px;
-  height: 100%;
-  overflow: hidden;
-  margin: 0px auto;
-  text-align: center;
+.Header {
+    border-radius: 0 !important;
+    max-height: 50px;
+    box-shadow: 0px 0px 5px black !important;
+    background-color: rgb(255, 255, 255, 0.5) !important;
 }
 
-.Title {
-    color: white;
-    font-size: 2em;
-    text-align: left;
-    margin-left: 100px;
+.Container {
+    position: relative;
+    width: 1000px; height: 600px;
+    margin: 0px auto;
+    box-shadow: 0px 0px 5px black;
+    border-radius: 10px;
+    margin-top: 40px;
 }
 
 .VideoCanvas {
-    position: relative;
-    display: inline-block;
-    box-sizing: border-box;
+    position: absolute;
+    top: 0px; left: 0px;
     width: 800px; height: 600px;
-    
-    border-radius: 10px;
-    box-shadow: 0px 0px 5px black;
+    border-radius: 10px 0px 0px 10px;
     background-color: rgb(8, 89, 187);
 }
 
 .IdentifiedList {
-    position: relative;
-    display: inline-block;
+    position: absolute;
+    top: 0px; left: 800px;
     width: 200px; height: 600px;
-
-    border-radius: 10px;
-    box-shadow: 0px 0px 5px black;
+    border-radius: 0px 10px 10px 0px;
     background-color: rgb(255, 255, 255, 0.5);
+    overflow: hidden;
 }
