@@ -4,7 +4,11 @@
   "description": "A minimal Electron application",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start-electron": "electron .",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "repository": "",
   "keywords": [
@@ -14,14 +18,37 @@
     "tutorial",
     "demo"
   ],
-  "author": "GitHub",
+  "author": "Luncert",
   "license": "CC0-1.0",
-  "devDependencies": {},
   "engines": {
     "node": ">=10.5.0"
   },
+  "devDependencies": {},
   "dependencies": {
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.14",
+    "@types/react": "^16.9.13",
+    "@types/react-dom": "^16.9.4",
     "electron": "^7.1.2",
-    "smipc": "^1.0.30"
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-scripts": "^3.2.0",
+    "smipc": "^1.0.30",
+    "typescript": "^3.7.2"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
