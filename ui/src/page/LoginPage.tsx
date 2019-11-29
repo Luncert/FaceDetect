@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { Input, Grid, Image, Button } from 'semantic-ui-react';
+import { Input, Grid, Image, Button, Label, Radio, Checkbox } from 'semantic-ui-react';
+import './LoginPage.css';
 
 export default class LoginPage extends Component {
     render() {
@@ -11,7 +12,7 @@ export default class LoginPage extends Component {
             width: 400, height: 300,
             borderRadius: 10,
             boxShadow: '0px 0px 5px black',
-            backgroundColor: 'rgb(255, 255, 255, 1)',
+            backgroundColor: 'rgb(255, 255, 255)',
         }}>
             <div style={{
                 width: '100%', height: 100,
@@ -30,30 +31,20 @@ export default class LoginPage extends Component {
                     textShadow: '0px 0px 3px rgba(20, 88, 180)'
                 }}>Face Detect</span>
             </div>
-            <Image src='https://react.semantic-ui.com/images/avatar/large/matthew.png' avatar size='tiny' bordered
-                style={{
-                    display: 'block',
-                    position: 'relative',
-                    margin: '0px auto',
-                    marginTop: '-40px'
-                }} />
-            <Grid textAlign='center' stretched>
-                <Grid.Row>
-                    <Input icon='user' iconPosition='left' transparent
-                        style={{borderBottom: '1px solid gray'}}
-                        />
-                </Grid.Row>
-                <Grid.Row>
-                    <Input icon='lock' iconPosition='left' transparent type='password'
-                        onFocus={() => this.setState({focusPwInput: true})}
-                        onBlur={() => this.setState({focusPwInput: false})}
-                        style={{borderBottom: '1px solid gray'}}
-                        />
-                </Grid.Row>
-                <Grid.Row>
-                    <Button>登录</Button>
-                </Grid.Row>
-            </Grid>
+            <div style={{width: '100%', height: 50}}>
+                <Image className='Avatar' src='https://react.semantic-ui.com/images/avatar/large/matthew.png' avatar size='tiny' bordered />
+            </div>
+            <div style={{width: 200, margin: '0px auto'}}>
+                <Input className='InputEnhance' icon='user' iconPosition='left' transparent focus />
+                <Input className='InputEnhance' icon='lock' iconPosition='left' transparent
+                            type='password'
+                            onFocus={() => this.setState({focusPwInput: true})}
+                            onBlur={() => this.setState({focusPwInput: false})}
+                            />
+                <Checkbox label='记住账号' />
+                <a style={{float: 'right', cursor: 'pointer'}}>找回密码</a>
+                <Button primary size='mini' style={{width: 200, marginTop: 20}}>登录</Button>
+            </div>
         </div>
       )
     }
