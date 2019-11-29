@@ -72,3 +72,49 @@ class FrameTransport(smipc.Channel):
             v += (ord(buf[start_pos]) << (i * 8))
             start_pos += 1
         return v
+
+
+if __name__ == '__main__':
+    import sys
+    import json
+
+    with open('smipc_conf.json', 'rb') as f:
+        conf = f.read().decode('utf8')
+    conf = json.loads(conf)
+
+    if sys.argv[1].find('-s') == 0:
+        print('Start as sender')
+
+        import cv2
+        import smipc
+        import time
+
+        count = 200
+        smipc.init_library(smipc.LOG_ALL)
+        source = cv2.VideoCapture('demo.mp4')
+        with FrameTransport(conf['cid'], smipc.CHAN_W, conf['chanSz']) as ft:
+            while count > 0:
+                _, f = source.read()
+                f = cv2.cvtColor(f, cv2.COLOR_BGR2BGRA)
+                time.sleep(0.025)
+                ft.send_frame(f)
+                count -= 1
+        source.release()
+        smipc.clean_library()
+    else:
+        print('Start as receiver')
+
+        import cv2
+        import smipc
+
+        smipc.init_library(smipc.LOG_BASIC)
+        with FrameTransport(conf['cid'], smipc.CHAN_R, conf['chanSz']) as ft:
+            while True:
+                f = ft.read_frame()
+                if f is None:
+                    break
+                cv2.imshow("Frame", f)
+                if cv2.waitKey(50) & 0xff == 'q':
+                    break
+        cv2.destroyAllWindows()
+        smipc.clean_library()
