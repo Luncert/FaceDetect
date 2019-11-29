@@ -1,26 +1,27 @@
 import React, { Component } from 'react';
 import {
-  Button,
-  Checkbox,
   Grid,
   Header,
-  Icon,
   Image,
   List,
   Segment,
-  Sidebar,
-  Divider,
   Loader,
   Dimmer,
+  Select,
 } from 'semantic-ui-react'
 import './App.css';
+import LoginPage from './page/LoginPage';
 
-class App extends Component {
+class MainPage extends Component {
   render() {
     let identifiedList = []
     for (let i = 0; i < 20; i++) {
       identifiedList.push({avatar: 'https://react.semantic-ui.com/images/avatar/large/matthew.png', name: 'Rachel', id: '2016220202001'})
     }
+    let classList = [
+      { key: 'G0915320.01', value: 'G0915320.01', text: '计算机组成原理' },
+      { key: 'G0915320.02', value: 'G0915320.02', text: '软件安全设计' },
+    ]
     return (
       <div style={{
               position: 'relative',
@@ -51,6 +52,9 @@ class App extends Component {
                 </div>
                 <div className='IdentifiedList'>
                   <div style={{textAlign: 'center', margin: '10px 0px 10px 0px'}}>
+                    <Select placeholder='选择课程' options={classList} />
+                  </div>
+                  <div style={{textAlign: 'center', margin: '10px 0px 10px 0px'}}>
                     <Header as='h5'>已签到学生列表</Header>
                   </div>
                   <div className='scroller'
@@ -74,7 +78,22 @@ class App extends Component {
                 </div>
               </div>
             </div>
-            <div className='App-Background'></div>
+      </div>
+    )
+  }
+}
+
+class App extends Component {
+  render() {
+    return (
+      <div style={{
+              position: 'relative',
+              boxSizing: 'border-box',
+              top: 0,
+              width: '100%', height: '100%',
+          }}>
+        <LoginPage />
+        <div className='App-Background'></div>
       </div>
     )
   }
