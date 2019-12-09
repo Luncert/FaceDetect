@@ -26,8 +26,6 @@ public class UserAccount implements Serializable {
         char c = s.charAt(0);
         if (c == 't' || c == 'T') {
             return new UserAccount(s.substring(1), UserRole.Teacher);
-        } else if (c == 'm' || c == 'M') {
-            return new UserAccount(s.substring(1), UserRole.Manager);
         } else {
             return new UserAccount(s, UserRole.Student);
         }
@@ -37,8 +35,6 @@ public class UserAccount implements Serializable {
     public String toString() {
         if (UserRole.Teacher.equals(role)) {
             return "T" + objectID;
-        } else if (UserRole.Manager.equals(role)) {
-            return "M" + objectID;
         } else {
             // as student
             return objectID;

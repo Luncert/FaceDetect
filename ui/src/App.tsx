@@ -16,9 +16,9 @@ class App extends Component {
               width: '100%', height: '100%',
           }}>
         <div className='App-Background'></div>
-        <LoginPage afterSignin={() => {}}/>
+        {/* <LoginPage afterSignin={() => {}}/> */}
         {/* <ResetPasswordPage /> */}
-        {/* <MainPage /> */}
+        <MainPage />
       </div>
     )
   }
