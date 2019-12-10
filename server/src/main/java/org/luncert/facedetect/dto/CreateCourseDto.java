@@ -2,12 +2,12 @@ package org.luncert.facedetect.dto;
 
 import lombok.Data;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
 public class CreateCourseDto {
 
   private String name;
 
-  private List<String> studentIDList;
+  private Set<String> studentIDList;
 }

@@ -7,7 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateCourseDto {
+public class BasicCourseDto {
 
-  private String name;
+    private long id;
+
+    private String name;
 }

@@ -7,7 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateCourseDto {
+public class BasicStudentDto {
 
-  private String name;
+
+    private String id;
+
+    private String name;
+
+    private boolean hasFaceData;
 }
