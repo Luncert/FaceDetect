@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SignInRecordRepo extends CrudRepository<SignInRecord, Long> {
+
+  SignInRecord findByStudentID(String studentID);
 }

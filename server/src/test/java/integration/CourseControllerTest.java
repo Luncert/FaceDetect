@@ -56,7 +56,7 @@ public class CourseControllerTest {
     private List<Course> courseList;
 
     @Before
-    public void authorize() throws Exception {
+    public void setup() throws Exception {
         Triple<Teacher, UserInfo, String> triple = dataGenerator.genTeacher();
         Teacher teacher = triple.getLeft();
         UserInfo teacherAccount = triple.getMiddle();

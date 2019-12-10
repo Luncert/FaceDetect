@@ -1,5 +1,7 @@
 package org.luncert.facedetect.controller;
 
+import com.alibaba.fastjson.JSONObject;
+import org.luncert.facedetect.exception.InvalidRequestParamException;
 import org.luncert.facedetect.model.SignIn;
 import org.luncert.facedetect.model.SignInRecord;
 import org.luncert.facedetect.model.Student;
@@ -18,7 +20,7 @@ import java.util.Optional;
  * SignIn Record
  */
 @RestController
-@RequestMapping("/user/teacher/{courseID}")
+@RequestMapping("/user/teacher/course:{courseID}")
 public class SignInController {
 
     @Autowired
@@ -36,12 +38,15 @@ public class SignInController {
      * @return signIn id
      */
     @PostMapping("/signIn/start")
-    public long startSignIn(@PathVariable("courseID") long cid) {
+    public String startSignIn(@PathVariable("courseID") long cid) {
         SignIn record = new SignIn();
         record.setStartTime(System.currentTimeMillis());
         record.setCourseID(cid);
         record = signInRepo.save(record);
-        return record.getId();
+
+        JSONObject json = new JSONObject();
+        json.put("signInID", record.getId());
+        return json.toJSONString();
     }
 
     /**
@@ -52,32 +57,33 @@ public class SignInController {
      * @param beLate False=在签到是时间内签到 or 签到失败老师手动签到，True=签到时间外老师手动签到
      * @return
      */
-    @PostMapping("/{signInID}/{studentID}")
+    @PutMapping("/signIn:{signInID}/student:{studentID}")
     public ResponseEntity signIn(@PathVariable("courseID") long cid,
                                  @PathVariable("signInID") long signInID,
-                                 @PathVariable("studentID") String sid, boolean beLate) {
-        Optional<SignIn> optionalSignInRecord = signInRepo.findById(signInID);
-        if (!optionalSignInRecord.isPresent()) {
-            return ResponseEntity.badRequest().body("Invalid signInID.");
+                                 @PathVariable("studentID") String studentID, boolean beLate) throws InvalidRequestParamException {
+        if (studentRepo.findById(studentID).isPresent()) {
+            return ResponseEntity.badRequest().body("Specified student has been sign in.");
         }
-        SignIn record = optionalSignInRecord.get();
-        if (record.getCourseID() != cid) {
+
+        SignIn signIn = signInRepo.findById(signInID).orElseThrow(() -> new InvalidRequestParamException("Invalid sign in id."));
+        if (signIn.getCourseID() != cid) {
             return ResponseEntity.badRequest().body("Invalid courseID.");
         }
-        Optional<Student> optionalStudent = studentRepo.findById(sid);
-        if (!optionalStudent.isPresent()) {
-            return ResponseEntity.badRequest().body("Invalid studentID.");
-        }
-        Student student = optionalStudent.get();
+        Student student = studentRepo.findById(studentID)
+            .orElseThrow(() -> new InvalidRequestParamException("Invalid student id."));
 
         SignInRecord signInRecord = new SignInRecord();
         signInRecord.setStudent(student);
         signInRecord.setBeLate(beLate);
         signInRecordRepo.save(signInRecord);
+
+        signIn.getSignInRecords().add(signInRecord);
+        signInRepo.save(signIn);
+
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    @PostMapping("/{signInID}/stop")
+    @PutMapping("/signIn:{signInID}/stop")
     public ResponseEntity stopSignIn(@PathVariable("courseID") long cid,
                            @PathVariable("signInID") long signInID) {
         Optional<SignIn> optionalSignInRecord = signInRepo.findById(signInID);
@@ -98,7 +104,7 @@ public class SignInController {
         return signInRepo.findAllByCourseID(cid);
     }
 
-    @GetMapping("/{signInID}")
+    @GetMapping("/signIn:{signInID}")
     public ResponseEntity getSignInRecord(@PathVariable("courseID") long cid,
                                                   @PathVariable("signInID") long signInID) {
         Optional<SignIn> optionalSignInRecord = signInRepo.findById(signInID);
@@ -109,7 +115,7 @@ public class SignInController {
         return ResponseEntity.ok(record.getSignInRecords());
     }
 
-    @DeleteMapping("/{signInID}")
+    @DeleteMapping("/signIn:{signInID}")
     public void removeSignInRecord(@PathVariable("courseID") long cid,
                                    @PathVariable("signInID") long signInID) {
         signInRepo.deleteById(signInID);
