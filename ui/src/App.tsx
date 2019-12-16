@@ -3,6 +3,7 @@ import './App.css';
 import LoginPage from './page/LoginPage';
 import ResetPasswordPage from './page/ResetPasswordPage';
 import MainPage from './page/MainPage';
+import TeacherPage from './page/TeacherPage'
 
 
 // TODO: 查看所有课程的页面、查看课程所有学生签到信息的页面、查看操作记录的页面、查看学生签到信息的页面
@@ -18,7 +19,8 @@ class App extends Component {
         <div className='App-Background'></div>
         {/* <LoginPage afterSignin={() => {}}/> */}
         {/* <ResetPasswordPage /> */}
-        <MainPage />
+        {/* <MainPage /> */}
+        <TeacherPage />
       </div>
     )
   }
