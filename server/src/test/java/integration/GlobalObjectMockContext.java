@@ -29,7 +29,7 @@ public class GlobalObjectMockContext {
                         // 初始化CONTEXT，注册需要的对象生成器
                         CONTEXT.register(ObjectGenerator.builder(Student.class)
                                 .addIgnores("faceData")
-                                .field("id", (ctx, cls) -> "20162202" + RandomStringUtils.randomAlphanumeric(5))
+                                .field("id", (ctx, cls) -> "20162202" + RandomStringUtils.randomNumeric(5))
                                 .field("name", stringGenerator(6))
                                 .build());
 

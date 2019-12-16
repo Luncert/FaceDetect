@@ -1,9 +1,13 @@
 package org.luncert.facedetect.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class LeaveApplyPostResultDto {
+@AllArgsConstructor
+@NoArgsConstructor
+public class LeaveSlipProcessResultDto {
 
     private boolean approval;
 

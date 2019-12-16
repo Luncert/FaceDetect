@@ -19,5 +19,6 @@ public class Student {
 
     private String name;
 
+    @Column(columnDefinition = "MediumBlob")
     private byte[] faceData;
 }

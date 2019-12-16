@@ -50,10 +50,10 @@ public class CourseControllerTest {
 
     private MockHttpSession session;
 
+    private List<Course> courseList;
+
     @Autowired
     private CourseRepo courseRepo;
-
-    private List<Course> courseList;
 
     @Before
     public void setup() throws Exception {

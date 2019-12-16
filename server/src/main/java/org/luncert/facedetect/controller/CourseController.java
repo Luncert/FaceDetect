@@ -55,11 +55,6 @@ public class CourseController {
         courseRepo.save(course);
     }
 
-    /**
-     * find all of the teacher's courses
-     * @param authentication
-     * @return course list
-     */
     @GetMapping("/courses")
     public List<BasicCourseDto> getCourses(Authentication authentication) {
         UserAccount account = ((UserInfo) authentication.getPrincipal()).getAccount();

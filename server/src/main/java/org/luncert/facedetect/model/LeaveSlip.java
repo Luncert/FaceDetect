@@ -2,18 +2,19 @@ package org.luncert.facedetect.model;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Data
 @Entity
-public class LeaveApplication {
+public class LeaveSlip {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  private String studentID;
+
+  private Long courseID;
 
   private State state;
 
@@ -21,13 +22,17 @@ public class LeaveApplication {
 
   private String date;
 
+  @Column(columnDefinition = "Blob")
   private String content;
 
-  private byte[] attachment;
+  @Embedded
+  private Attachment attachment;
 
   public enum State {
     UnProcessed,
     Approved,
     Rejected;
   }
+
+  private String teacherComment;
 }

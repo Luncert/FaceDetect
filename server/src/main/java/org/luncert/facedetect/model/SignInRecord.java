@@ -12,6 +12,8 @@ public class SignInRecord {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  private Long createTime;
+
   @OneToOne(cascade = CascadeType.REFRESH)
   @JoinColumn(name = "studentID", referencedColumnName = "id")
   private Student student;
@@ -20,5 +22,5 @@ public class SignInRecord {
 
   @OneToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
   @JoinColumn(name = "leaveSlipID", referencedColumnName = "id")
-  private LeaveApplication leaveSlip;
+  private LeaveSlip leaveSlip;
 }

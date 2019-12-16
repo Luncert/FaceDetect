@@ -1,5 +1,6 @@
 package integration;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Triple;
@@ -9,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.luncert.facedetect.App;
+import org.luncert.facedetect.dto.GetSignInDto;
 import org.luncert.facedetect.model.Course;
 import org.luncert.facedetect.model.SignIn;
 import org.luncert.facedetect.model.SignInRecord;
@@ -26,12 +28,9 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -55,6 +54,9 @@ public class SignInControllerTest {
 
   @Autowired
   private SignInRepo signInRepo;
+
+  @Autowired
+  private SignInRecordRepo signInRecordRepo;
 
   @Before
   public void setup() throws Exception {
@@ -133,11 +135,75 @@ public class SignInControllerTest {
   }
 
   @Test
-  public void testGetSignIn() throws Exception {
+  public void testGetSignInList() throws Exception {
+    SignIn signIn = new SignIn();
+    signIn.setCourseID(course.getId());
+    signIn.setStartTime(System.currentTimeMillis());
+    signInRepo.save(signIn);
+
+    List<GetSignInDto> signInDtoList = Collections.singletonList(
+            new GetSignInDto(signIn.getId(), signIn.getStartTime(), signIn.getEndTime(), signIn.getCourseID()));
+
     mockMvc.perform(
             get("/user/teacher/course:{0}/signInList", course.getId())
                     .session(session))
             .andExpect(status().isOk())
+            .andExpect(content().json(JSON.toJSONString(signInDtoList)));
+  }
+
+  @Test
+  public void testGetSignInRecordList() throws Exception {
+    SignIn signIn = new SignIn();
+    signIn.setCourseID(course.getId());
+    signIn.setStartTime(System.currentTimeMillis());
+    signInRepo.save(signIn);
+
+    mockMvc.perform(
+            get("/user/teacher/course:{0}/signIn:{1}", course.getId(), signIn.getId())
+                    .session(session))
+            .andExpect(status().isOk())
             .andExpect(content().json("[]"));
+  }
+
+  @Test
+  public void testRemoveSignInRecord() throws Exception {
+    final Student student = course.getStudent().toArray(new Student[0])[0];
+
+    SignIn signIn = new SignIn();
+    signIn.setCourseID(course.getId());
+    signIn.setStartTime(System.currentTimeMillis());
+
+    SignInRecord signInRecord = new SignInRecord();
+    signInRecord.setStudent(student);
+    signInRecord.setBeLate(false);
+    signInRecordRepo.save(signInRecord);
+
+    signIn.setSignInRecords(Collections.singletonList(signInRecord));
+
+    signIn = signInRepo.save(signIn);
+
+    mockMvc.perform(
+            delete("/user/teacher/course:{0}/signIn:{1}/signInRecord:{2}", course.getId(), signIn.getId(), signInRecord.getId())
+                    .session(session))
+            .andExpect(status().isOk());
+
+    signIn = signInRepo.findById(signIn.getId()).orElseThrow();
+    List<SignInRecord> signInRecordList = signIn.getSignInRecords();
+    Assert.assertTrue(signInRecordList.isEmpty());
+  }
+
+  @Test
+  public void testRemoveSignIn() throws Exception {
+    SignIn signIn = new SignIn();
+    signIn.setCourseID(course.getId());
+    signIn.setStartTime(System.currentTimeMillis());
+    signIn.setEndTime(System.currentTimeMillis());
+    signIn = signInRepo.save(signIn);
+
+    mockMvc.perform(
+            delete("/user/teacher/course:{0}/signIn:{1}", course.getId(), signIn.getId())
+                    .session(session))
+            .andExpect(status().isOk());
+    Assert.assertFalse(signInRepo.findById(signIn.getId()).isPresent());
   }
 }

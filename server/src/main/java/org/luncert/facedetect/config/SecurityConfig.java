@@ -39,14 +39,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         hs.authorizeRequests()
                 .anyRequest().authenticated();
         hs.formLogin()
-                // TODO:
                 .loginPage("/user/signIn")
                 .loginProcessingUrl("/user/signIn")
                 .usernameParameter("account")
                 .passwordParameter("password")
                 .successHandler(new SecurityAuthSuccessHandler())
-                .failureHandler(new SecurityAuthFailureHandler())
-                // TODO:
-                .defaultSuccessUrl("/user", true);
+                .failureHandler(new SecurityAuthFailureHandler());
+//                .defaultSuccessUrl("/user", true);
     }
 }

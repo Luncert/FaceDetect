@@ -1,6 +1,7 @@
 package org.luncert.facedetect.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import org.luncert.facedetect.dto.GetSignInDto;
 import org.luncert.facedetect.exception.InvalidRequestParamException;
 import org.luncert.facedetect.model.SignIn;
 import org.luncert.facedetect.model.SignInRecord;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * SignIn Record
@@ -101,12 +103,15 @@ public class SignInController {
     }
 
     @GetMapping("/signInList")
-    public List getSignInList(@PathVariable("courseID") long cid) {
-        return signInRepo.findAllByCourseID(cid);
+    public List<GetSignInDto> getSignInList(@PathVariable("courseID") long cid) {
+        List<SignIn> signInList = signInRepo.findAllByCourseID(cid);
+        return signInList.stream()
+                .map(s -> new GetSignInDto(s.getId(), s.getStartTime(), s.getEndTime(), s.getCourseID()))
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/signIn:{signInID}")
-    public ResponseEntity getSignInRecord(@PathVariable("courseID") long cid,
+    public ResponseEntity getSignInRecordList(@PathVariable("courseID") long cid,
                                                   @PathVariable("signInID") long signInID) {
         Optional<SignIn> optionalSignInRecord = signInRepo.findById(signInID);
         if (!optionalSignInRecord.isPresent()) {
@@ -116,8 +121,15 @@ public class SignInController {
         return ResponseEntity.ok(record.getSignInRecords());
     }
 
-    @DeleteMapping("/signIn:{signInID}")
+    @DeleteMapping("/signIn:{signInID}/signInRecord:{signInRecordID}")
     public void removeSignInRecord(@PathVariable("courseID") long cid,
+                                   @PathVariable("signInID") long signInID,
+                                   @PathVariable("signInRecordID") long signInRecordID) {
+        signInRecordRepo.deleteById(signInRecordID);
+    }
+
+    @DeleteMapping("/signIn:{signInID}")
+    public void removeSignIn(@PathVariable("courseID") long cid,
                                    @PathVariable("signInID") long signInID) {
         signInRepo.deleteById(signInID);
     }
