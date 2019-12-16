@@ -6,10 +6,7 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.luncert.facedetect.model.*;
-import org.luncert.facedetect.repo.CourseRepo;
-import org.luncert.facedetect.repo.StudentRepo;
-import org.luncert.facedetect.repo.TeacherRepo;
-import org.luncert.facedetect.repo.UserInfoRepo;
+import org.luncert.facedetect.repo.*;
 import org.luncert.objectmocker.core.ObjectMockContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +29,9 @@ class DataGenerator {
 
     @Autowired
     private CourseRepo courseRepo;
+
+    @Autowired
+    private SignInRecordRepo signInRecordRepo;
 
     Triple<Student, UserInfo, String> genStudent() {
         Student student = mockContext.generate(Student.class);
@@ -57,6 +57,7 @@ class DataGenerator {
 
     void cleanDatabase() {
         // 先清空CourseRepo再清空StudentRepo：先删除外键约束，才能删除外键父表
+        signInRecordRepo.deleteAll();
         courseRepo.deleteAll();
         studentRepo.deleteAll();
         teacherRepo.deleteAll();

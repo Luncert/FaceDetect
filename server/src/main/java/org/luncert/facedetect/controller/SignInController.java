@@ -53,15 +53,18 @@ public class SignInController {
      *
      * @param cid
      * @param signInID
-     * @param sid
-     * @param beLate False=在签到是时间内签到 or 签到失败老师手动签到，True=签到时间外老师手动签到
+     * @param studentID
+     * @param beLate False=在签到时间内签到 or 签到失败老师手动签到，True=签到时间外老师手动签到
      * @return
      */
     @PutMapping("/signIn:{signInID}/student:{studentID}")
     public ResponseEntity signIn(@PathVariable("courseID") long cid,
                                  @PathVariable("signInID") long signInID,
                                  @PathVariable("studentID") String studentID, boolean beLate) throws InvalidRequestParamException {
-        if (studentRepo.findById(studentID).isPresent()) {
+        Student student = studentRepo.findById(studentID)
+                .orElseThrow(() -> new InvalidRequestParamException("Invalid student id."));
+
+        if (signInRecordRepo.findByStudent(student).isPresent()) {
             return ResponseEntity.badRequest().body("Specified student has been sign in.");
         }
 
@@ -69,8 +72,6 @@ public class SignInController {
         if (signIn.getCourseID() != cid) {
             return ResponseEntity.badRequest().body("Invalid courseID.");
         }
-        Student student = studentRepo.findById(studentID)
-            .orElseThrow(() -> new InvalidRequestParamException("Invalid student id."));
 
         SignInRecord signInRecord = new SignInRecord();
         signInRecord.setStudent(student);
@@ -99,8 +100,8 @@ public class SignInController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    @GetMapping("/signInRecords")
-    public List getSignInRecords(@PathVariable("courseID") long cid) {
+    @GetMapping("/signInList")
+    public List getSignInList(@PathVariable("courseID") long cid) {
         return signInRepo.findAllByCourseID(cid);
     }
 

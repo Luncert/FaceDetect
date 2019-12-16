@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -54,9 +55,6 @@ public class SignInControllerTest {
 
   @Autowired
   private SignInRepo signInRepo;
-
-  @Autowired
-  private SignInRecordRepo signInRecordRepo;
 
   @Before
   public void setup() throws Exception {
@@ -98,7 +96,6 @@ public class SignInControllerTest {
     Assert.assertTrue(signInRepo.existsById(signInID));
   }
 
-  // TODO:...
   @Test
   public void testSignIn() throws Exception {
     final Student student = course.getStudent().toArray(new Student[0])[0];
@@ -112,10 +109,35 @@ public class SignInControllerTest {
         put("/user/teacher/course:{0}/signIn:{1}/student:{2}", course.getId(), signIn.getId(), student.getId())
         .session(session))
         .andExpect(status().isOk());
-
+    // check the responsive SignInRecord has been created
     signIn =  signInRepo.findById(signIn.getId()).orElseThrow();
     List<SignInRecord> signInRecords = signIn.getSignInRecords();
     Assert.assertEquals(1, signInRecords.size());
     Assert.assertEquals(student.getId(), signInRecords.get(0).getStudent().getId());
+  }
+
+  @Test
+  public void testStopSignIn() throws Exception {
+    SignIn signIn = new SignIn();
+    signIn.setCourseID(course.getId());
+    signIn.setStartTime(System.currentTimeMillis());
+    signIn = signInRepo.save(signIn);
+
+    mockMvc.perform(
+            put("/user/teacher/course:{0}/signIn:{1}/stop", course.getId(),  signIn.getId())
+                    .session(session))
+            .andExpect(status().isOk());
+
+    signIn = signInRepo.findById(signIn.getId()).orElseThrow();
+    Assert.assertTrue(signIn.getStartTime() < signIn.getEndTime());
+  }
+
+  @Test
+  public void testGetSignIn() throws Exception {
+    mockMvc.perform(
+            get("/user/teacher/course:{0}/signInList", course.getId())
+                    .session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().json("[]"));
   }
 }

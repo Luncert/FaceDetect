@@ -2,13 +2,7 @@ package org.luncert.facedetect.model;
 
 import lombok.Data;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 
 @Data
 @Entity
@@ -24,7 +18,7 @@ public class SignInRecord {
 
   private Boolean beLate = false;
 
-  @OneToOne(cascade = CascadeType.REFRESH)
+  @OneToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
   @JoinColumn(name = "leaveSlipID", referencedColumnName = "id")
   private LeaveApplication leaveSlip;
 }

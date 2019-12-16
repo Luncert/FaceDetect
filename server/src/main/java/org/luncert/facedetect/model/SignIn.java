@@ -25,7 +25,7 @@ public class SignIn {
 
     private Long courseID;
 
-    @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
     @JoinColumn(name = "recordID", referencedColumnName = "id")
     private List<SignInRecord> signInRecords;
 }
