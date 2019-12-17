@@ -112,7 +112,7 @@ public class SignInControllerTest {
         .session(session))
         .andExpect(status().isOk());
     // check the responsive SignInRecord has been created
-    signIn =  signInRepo.findById(signIn.getId()).orElseThrow();
+    signIn =  signInRepo.findById(signIn.getId()).orElseThrow(IllegalArgumentException::new);
     List<SignInRecord> signInRecords = signIn.getSignInRecords();
     Assert.assertEquals(1, signInRecords.size());
     Assert.assertEquals(student.getId(), signInRecords.get(0).getStudent().getId());
@@ -130,7 +130,7 @@ public class SignInControllerTest {
                     .session(session))
             .andExpect(status().isOk());
 
-    signIn = signInRepo.findById(signIn.getId()).orElseThrow();
+    signIn = signInRepo.findById(signIn.getId()).orElseThrow(IllegalArgumentException::new);
     Assert.assertTrue(signIn.getStartTime() < signIn.getEndTime());
   }
 
@@ -187,7 +187,7 @@ public class SignInControllerTest {
                     .session(session))
             .andExpect(status().isOk());
 
-    signIn = signInRepo.findById(signIn.getId()).orElseThrow();
+    signIn = signInRepo.findById(signIn.getId()).orElseThrow(IllegalArgumentException::new);
     List<SignInRecord> signInRecordList = signIn.getSignInRecords();
     Assert.assertTrue(signInRecordList.isEmpty());
   }

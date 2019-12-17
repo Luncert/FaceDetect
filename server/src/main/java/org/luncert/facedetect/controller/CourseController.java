@@ -45,7 +45,7 @@ public class CourseController {
                              @RequestBody CreateCourseDto createCourseDto) {
         UserAccount account = ((UserInfo) authentication.getPrincipal()).getAccount();
         long teacherID = Long.parseLong(account.getObjectID());
-        Teacher teacher = teacherRepo.findById(teacherID).get();
+        Teacher teacher = teacherRepo.findById(teacherID).orElseThrow(IllegalArgumentException::new);
         // create course and bind teacher, students
         Course course = new Course();
         course.setName(createCourseDto.getName());
@@ -71,7 +71,7 @@ public class CourseController {
         if (!optionalCourse.isPresent()) {
             return ResponseEntity.badRequest().body("Invalid course id.");
         }
-        List<BasicStudentDto> studentList = optionalCourse.get().getStudent().stream()
+        List<BasicStudentDto> studentList = optionalCourse.orElseThrow(IllegalArgumentException::new).getStudent().stream()
                 .map(s -> new BasicStudentDto(s.getId(), s.getName(), s.getFaceData() == null))
                 .collect(Collectors.toList());
         return new ResponseEntity<>(studentList, HttpStatus.OK);
@@ -89,7 +89,7 @@ public class CourseController {
             return ResponseEntity.badRequest().body("Invalid course id.");
         }
         // update course name
-        Course course = optionalCourse.get();
+        Course course = optionalCourse.orElseThrow(IllegalArgumentException::new);
         course.setName(newName);
         courseRepo.save(course);
         return new ResponseEntity(HttpStatus.OK);
@@ -102,12 +102,12 @@ public class CourseController {
         if (!optionalCourse.isPresent()) {
             return ResponseEntity.badRequest().body("Invalid course id.");
         }
-        Course course = optionalCourse.get();
+        Course course = optionalCourse.orElseThrow(IllegalArgumentException::new);
         Optional<Student> optionalStudent = studentRepo.findById(sid);
         if (!optionalStudent.isPresent()) {
             return ResponseEntity.badRequest().body("Invalid student id.");
         }
-        Student student = optionalStudent.get();
+        Student student = optionalStudent.orElseThrow(IllegalArgumentException::new);
         course.getStudent().add(student);
         courseRepo.save(course);
         return new ResponseEntity(HttpStatus.OK);

@@ -17,11 +17,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 final class Util {
 
+    private static final String CHARSET = StandardCharsets.UTF_8.name();
+
     static MockHttpSession authorize(MockMvc mockMvc, String account, String password) throws Exception {
-        String credential = URLEncoder.encode("account", StandardCharsets.UTF_8)
-                + '=' + URLEncoder.encode(account, StandardCharsets.UTF_8)
-                + '&' + URLEncoder.encode("password", StandardCharsets.UTF_8)
-                + '=' + URLEncoder.encode(password, StandardCharsets.UTF_8);
+        String credential = URLEncoder.encode("account", CHARSET)
+                + '=' + URLEncoder.encode(account, CHARSET)
+                + '&' + URLEncoder.encode("password", CHARSET)
+                + '=' + URLEncoder.encode(password, CHARSET);
+//        String credential = null;
 
         ResultActions resultActions = mockMvc.perform(
                 post("/user/signIn")

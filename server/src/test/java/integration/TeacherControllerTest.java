@@ -148,7 +148,7 @@ public class TeacherControllerTest {
                         .session(session))
                 .andExpect(status().isOk());
 
-        SignInRecord signInRecord = signInRecordRepo.findByStudent(student).orElseThrow();
+        SignInRecord signInRecord = signInRecordRepo.findByStudent(student).orElseThrow(IllegalArgumentException::new);
         l = signInRecord.getLeaveSlip();
         Assert.assertNotNull(l);
         Assert.assertEquals(LeaveSlip.State.Approved, l.getState());

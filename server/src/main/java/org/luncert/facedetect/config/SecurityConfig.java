@@ -39,7 +39,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         hs.authorizeRequests()
                 .anyRequest().authenticated();
         hs.formLogin()
-                .loginPage("/user/signIn")
+//                .loginPage("/user/signIn")
                 .loginProcessingUrl("/user/signIn")
                 .usernameParameter("account")
                 .passwordParameter("password")

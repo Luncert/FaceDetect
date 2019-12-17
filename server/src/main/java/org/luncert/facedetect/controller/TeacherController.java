@@ -39,11 +39,11 @@ public class TeacherController {
     @PutMapping("/leaveSlip:{leaveSlipID}")
     public void processLeaveSlip(@PathVariable("leaveSlipID") Long leaveSlipID,
                               @RequestBody LeaveSlipProcessResultDto result) {
-        LeaveSlip leaveSlip = leaveSlipRepo.findById(leaveSlipID).orElseThrow();
+        LeaveSlip leaveSlip = leaveSlipRepo.findById(leaveSlipID).orElseThrow(IllegalArgumentException::new);
         leaveSlip.setTeacherComment(result.getComment());
         if (result.isApproval()) {
-            SignIn signIn = signInRepo.findById(result.getSignInID()).orElseThrow();
-            Student student = studentRepo.findById(leaveSlip.getStudentID()).orElseThrow();
+            SignIn signIn = signInRepo.findById(result.getSignInID()).orElseThrow(IllegalArgumentException::new);
+            Student student = studentRepo.findById(leaveSlip.getStudentID()).orElseThrow(IllegalArgumentException::new);
 
             leaveSlip.setState(LeaveSlip.State.Approved);
             // bind leave slip to SignInRecord

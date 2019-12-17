@@ -37,7 +37,7 @@ public class StudentController {
     public StudentProfileDto getProfile(Authentication authentication) {
         UserAccount account = ((UserInfo) authentication.getPrincipal()).getAccount();
         String sid = account.getObjectID();
-        Student s = studentRepo.findById(sid).orElseThrow();
+        Student s = studentRepo.findById(sid).orElseThrow(IllegalAccessError::new);
         return new StudentProfileDto(s.getName());
     }
 
@@ -46,7 +46,7 @@ public class StudentController {
                                @RequestParam("faceData") MultipartFile faceData) throws IOException {
         UserAccount account = ((UserInfo) authentication.getPrincipal()).getAccount();
         String sid = account.getObjectID();
-        Student s = studentRepo.findById(sid).orElseThrow();
+        Student s = studentRepo.findById(sid).orElseThrow(IllegalArgumentException::new);
         s.setFaceData(faceData.getBytes());
         studentRepo.save(s);
     }

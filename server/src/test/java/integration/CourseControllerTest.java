@@ -140,7 +140,7 @@ public class CourseControllerTest {
                         .session(session))
                 .andExpect(status().isOk());
 
-        Course c = courseRepo.findById(course.getId()).orElseThrow();
+        Course c = courseRepo.findById(course.getId()).orElseThrow(IllegalArgumentException::new);
         Assert.assertNotEquals(course.getName(), c.getName());
         Assert.assertEquals(updateCourseDto.getName(), c.getName());
     }
@@ -155,7 +155,7 @@ public class CourseControllerTest {
                 .session(session))
                 .andExpect(status().isOk());
 
-        Course c = courseRepo.findById(course.getId()).orElseThrow();
+        Course c = courseRepo.findById(course.getId()).orElseThrow(IllegalArgumentException::new);
         Assert.assertTrue(c.getStudent().contains(student));
     }
 
@@ -168,7 +168,7 @@ public class CourseControllerTest {
                 .session(session))
                 .andExpect(status().isAccepted());
 
-        Course c = courseRepo.findById(course.getId()).orElseThrow();
+        Course c = courseRepo.findById(course.getId()).orElseThrow(IllegalArgumentException::new);
         Assert.assertFalse(c.getStudent().contains(student));
     }
 

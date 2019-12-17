@@ -93,7 +93,7 @@ public class SignInController {
         if (!optionalSignInRecord.isPresent()) {
             return ResponseEntity.badRequest().body("Invalid signInID.");
         }
-        SignIn record = optionalSignInRecord.get();
+        SignIn record = optionalSignInRecord.orElseThrow(IllegalArgumentException::new);
         if (record.getCourseID() != cid) {
             return ResponseEntity.badRequest().body("Invalid courseID.");
         }
@@ -117,7 +117,7 @@ public class SignInController {
         if (!optionalSignInRecord.isPresent()) {
             return ResponseEntity.badRequest().body("Invalid signInID.");
         }
-        SignIn record = optionalSignInRecord.get();
+        SignIn record = optionalSignInRecord.orElseThrow(IllegalArgumentException::new);
         return ResponseEntity.ok(record.getSignInRecords());
     }
 

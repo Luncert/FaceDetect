@@ -20,8 +20,8 @@ public class ResourceController {
     @GetMapping("/leaveSlipAttachment/{id}-{name:.*}")
     @PreAuthorize("hasRole('Student') or hasRole('Teacher')")
     public ResponseEntity getLeaveSlipAttachment(@PathVariable("id") Long id,
-                                                        @PathVariable("name") String name) {
-        Attachment attachment = leaveSlipRepo.findById(id).orElseThrow().getAttachment();
+                                                 @PathVariable("name") String name) {
+        Attachment attachment = leaveSlipRepo.findById(id).orElseThrow(IllegalArgumentException::new).getAttachment();
         return ResponseEntity.ok(attachment.getData());
     }
 

@@ -1,7 +1,5 @@
 ---
 applications:
 - name: facedetect
-  memory: 768M
-  path: target/facedetect.jar
-  services:
-    - db
+  memory: 1024M
+  path: target/FaceDetect.jar

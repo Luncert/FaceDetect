@@ -97,6 +97,7 @@
 	</profiles>
 
 	<build>
+		<finalName>FaceDetect</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -154,10 +155,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>10</source>
-                    <target>10</target>
-                </configuration>
+<!--                <configuration>-->
+<!--                    <source>10</source>-->
+<!--                    <target>10</target>-->
+<!--                </configuration>-->
             </plugin>
         </plugins>
 	</build>

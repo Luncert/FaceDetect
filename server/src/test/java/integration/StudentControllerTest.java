@@ -108,7 +108,7 @@ public class StudentControllerTest {
                         .session(session))
                 .andExpect(status().isOk());
 
-        final Student s = studentRepo.findById(student.getId()).orElseThrow();
+        final Student s = studentRepo.findById(student.getId()).orElseThrow(IllegalArgumentException::new);
         Assert.assertArrayEquals(faceData, s.getFaceData());
     }
 
