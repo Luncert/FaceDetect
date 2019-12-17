@@ -28,8 +28,8 @@ final class Util {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(credential));
 
-        resultActions.andExpect(status().is(302)); // 302 登录成功重定向到用户首页
-        resultActions.andExpect(header().stringValues("Location", "/user"));
+        resultActions.andExpect(status().isOk());
+//        resultActions.andExpect(header().stringValues("Location", "/user"));
 
         MvcResult result = resultActions.andReturn();
         MockHttpServletRequest req = result.getRequest();
