@@ -35,16 +35,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity hs) throws Exception {
         hs.csrf().disable();
         hs.authorizeRequests()
-                .antMatchers(HttpMethod.GET, "/user/signIn").permitAll();
+            .antMatchers(HttpMethod.POST, "/user/student", "/user/teacher").permitAll()
+            .antMatchers(HttpMethod.GET, "/user/unauthorized").permitAll();
         hs.authorizeRequests()
-                .anyRequest().authenticated();
+            .anyRequest().authenticated();
         hs.formLogin()
-//                .loginPage("/user/signIn")
-                .loginProcessingUrl("/user/signIn")
-                .usernameParameter("account")
-                .passwordParameter("password")
-                .successHandler(new SecurityAuthSuccessHandler())
-                .failureHandler(new SecurityAuthFailureHandler());
+            .loginPage("/user/unauthorized")
+            .loginProcessingUrl("/user/signIn")
+            .usernameParameter("account")
+            .passwordParameter("password")
+            .successHandler(new SecurityAuthSuccessHandler())
+            .failureHandler(new SecurityAuthFailureHandler());
 //                .defaultSuccessUrl("/user", true);
     }
 }
