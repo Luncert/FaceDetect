@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GetSignInDto {
 
-    private Long id, startTime, endTime, courseID;
+    private Long id, startTime, endTime;
 }

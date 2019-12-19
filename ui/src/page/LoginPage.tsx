@@ -1,19 +1,17 @@
 import React, { Component } from 'react';
-import { Input, Grid, Image, Button, Label, Radio, Checkbox } from 'semantic-ui-react';
+import { Input, Button, Checkbox, Loader, Dimmer } from 'semantic-ui-react';
+import { toast } from 'react-toastify';
 import './LoginPage.css';
 import Axios from '../Axios';
 import API from '../API';
 
 interface Props {
-    afterSignin: () => void
+    afterSignin: (role: string) => void
 }
 
 interface State {
     focusPwInput: boolean
-    avatar: {
-        account: string
-        url: string
-    }
+    loading: boolean
 }
 
 export default class LoginPage extends Component<Props, State> {
@@ -24,10 +22,7 @@ export default class LoginPage extends Component<Props, State> {
         super(props)
         this.state = {
             focusPwInput: false,
-            avatar: {
-                account: '',
-                url: ''
-            }
+            loading: false,
         }
     }
 
@@ -52,20 +47,38 @@ export default class LoginPage extends Component<Props, State> {
         this.password = e.target.value
     }
 
-    loadAvatar() {
-        Axios.get(API.user.avatar + '/' + this.account)
-            .then((rep) => {
-                this.setState({
-                    avatar: {
-                        account: this.account,
-                        url: rep.data.url
-                    }
+    verify() {
+        // 值校验
+        if (!this.account || !this.valueCheck(this.account)
+            || !this.password || !this.valueCheck(this.password)) {
+            toast('请正确填写登录信息', { position: toast.POSITION.BOTTOM_LEFT, type: 'warning', autoClose: 3000 })
+        } else {
+            // 发起验证请求
+            let encode = encodeURIComponent;
+            let data = encode('account') + '=' + encode(this.account)
+                + '&' + encode('password') + '=' + encode(this.password);
+            this.setState({loading: true})
+            Axios.post(API.user.signin, data,
+                { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+                .then((rep) => {
+                    this.props.afterSignin(rep.data.role)
                 })
-            })
+                .catch((err) => {
+                    console.log(err)
+                    // let rep = err.response
+                    // if (!rep.data.identified) {
+                    //     toast('账号或密码不正确', { position: toast.POSITION.BOTTOM_LEFT, type: 'error', autoClose: 3000 })
+                    // } else {
+                    //     console.error(err)
+                    // }
+                    toast('账号或密码不正确', { position: toast.POSITION.BOTTOM_LEFT, type: 'error', autoClose: 3000 })
+                    this.setState({loading: false})
+                })
+        }
     }
 
     render() {
-        const { avatar } = this.state
+        const { loading } = this.state
         return (
             <div style={{
                 position: 'relative',
@@ -75,46 +88,47 @@ export default class LoginPage extends Component<Props, State> {
                 borderRadius: 10,
                 boxShadow: '0px 0px 5px black',
                 backgroundColor: 'rgb(255, 255, 255)',
+                backgroundImage: 'url(' + require('../res/login-header.jfif') + ')',
+                backgroundSize: 'cover'
             }}>
+            <Dimmer active={loading}>
+              <Loader indeterminate />
+            </Dimmer>
                 <div style={{
                     width: '100%', height: 100,
                     boxSizing: 'border-box',
                     position: 'relative',
                     padding: 5,
+                    textAlign: 'center',
                     borderRadius: '10px 10px 0px 0px',
                     borderTop: '1px solid rgb(80, 80, 80)',
-                    backgroundImage: 'url(' + require('../res/login-header.jfif') + ')',
-                    backgroundSize: 'cover'
                 }}>
                     <span style={{
+                        position: 'relative',
+                        top: 60,
                         color: 'white',
                         fontWeight: 'bold',
-                        fontSize: '1.5em',
-                        textShadow: '0px 0px 3px rgba(20, 88, 180)'
+                        fontSize: '3em',
+                        textShadow: '0px 0px 3px black'
                     }}>Face Detect</span>
                 </div>
-                <div style={{width: '100%', height: 50}}>
-                    <Image className='Avatar' avatar size='tiny' bordered
-                        src={avatar.url ? avatar.url : 'https://react.semantic-ui.com/images/avatar/large/matthew.png'} />
-                </div>
-                <div style={{width: 200, margin: '0px auto'}}>
-                    <Input className='InputEnhance' icon='user' iconPosition='left' transparent focus
-                        onChange={this.inputAccount.bind(this)}
-                        onBlur={() => {
-                            if (this.account
-                                && this.account !== avatar.account
-                                && this.valueCheck(this.account)) {
-                                this.loadAvatar()
-                            }
-                        }} />
-                    <Input className='InputEnhance' icon='lock' iconPosition='left' transparent
-                                type='password'
-                                onFocus={() => this.setState({focusPwInput: true})}
-                                onBlur={() => this.setState({focusPwInput: false})}
-                                />
-                    <Checkbox label='记住账号' />
-                    <a style={{float: 'right', cursor: 'pointer'}}>找回密码</a>
-                    <Button primary size='mini' style={{width: 200, marginTop: 20}}>登录</Button>
+                <div style={{position: 'relative', width: '100%', padding: '10px 0px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    boxShadow: '0px 0px 3px black'}}>
+                    <div style={{width: 200, margin: '0px auto'}}>
+                        <Input className='InputEnhance' icon='user' iconPosition='left' focus
+                            onChange={this.inputAccount.bind(this)}
+                            />
+                        <Input className='InputEnhance' icon='lock' iconPosition='left'
+                                    type='password'
+                                    onFocus={() => this.setState({focusPwInput: true})}
+                                    onBlur={() => this.setState({focusPwInput: false})}
+                                    onChange={this.inputPassword.bind(this)}
+                                    />
+                        <a style={{float: 'right', cursor: 'pointer'}}>找回密码</a>
+                        <Button primary size='mini' style={{width: 200, marginTop: 20}}
+                            onClick={this.verify.bind(this)}>登录</Button>
+                    </div>
                 </div>
             </div>
         )

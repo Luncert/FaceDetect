@@ -7,11 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LeaveSlipProcessResultDto {
+public class TeacherGetStudentDto {
 
-    private boolean approved;
+  private String id;
 
-    private long signInID;
-
-    private String comment;
+  private String name;
 }

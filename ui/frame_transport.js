@@ -1,4 +1,4 @@
-const conf = require('./smipc_conf.json')
+const conf = require('./config.json').smipc
 const smipc = require('smipc')
 const { parentPort } = require('worker_threads')
 

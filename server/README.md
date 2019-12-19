@@ -20,7 +20,8 @@ ContentType: Application Form Url Encoded
 
 ```json
 {
-    "identified": true
+    "identified": true,
+    "role": "Teacher" // or "Student"
 }
 ```
 
@@ -36,6 +37,7 @@ GET ```/user/teacher/leaveSlips```
 [
     {
         "id": <Long>,
+        "courseID": <Long>,
         "courseName": <String>,
         "studentID": <String>,
         "studentName": <String>,
@@ -165,8 +167,7 @@ GET ```/user/teacher/course:{courseID}/signInList```
     {
         "id": <Long>,
         "startTime": <Long>,
-        "endTime": <Long>,
-        "courseID": <Long>
+        "endTime": <Long>
     }
 ]
 ```

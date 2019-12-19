@@ -142,7 +142,7 @@ public class SignInControllerTest {
     signInRepo.save(signIn);
 
     List<GetSignInDto> signInDtoList = Collections.singletonList(
-            new GetSignInDto(signIn.getId(), signIn.getStartTime(), signIn.getEndTime(), signIn.getCourseID()));
+            new GetSignInDto(signIn.getId(), signIn.getStartTime(), signIn.getEndTime()));
 
     mockMvc.perform(
             get("/user/teacher/course:{0}/signInList", course.getId())

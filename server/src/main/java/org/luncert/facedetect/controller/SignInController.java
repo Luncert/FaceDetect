@@ -106,7 +106,7 @@ public class SignInController {
     public List<GetSignInDto> getSignInList(@PathVariable("courseID") long cid) {
         List<SignIn> signInList = signInRepo.findAllByCourseID(cid);
         return signInList.stream()
-                .map(s -> new GetSignInDto(s.getId(), s.getStartTime(), s.getEndTime(), s.getCourseID()))
+                .map(s -> new GetSignInDto(s.getId(), s.getStartTime(), s.getEndTime()))
                 .collect(Collectors.toList());
     }
 

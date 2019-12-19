@@ -1,11 +1,8 @@
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
-const { parentPort, Worker } = require('worker_threads')
+const { AIService } = require('./ai_service')
 
-
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
 function createWindow () {
@@ -27,14 +24,13 @@ function createWindow () {
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
 
-  // let ft = new Worker('./frame_transport.js')
-  // ft.on('message', (frame) => {
-  //   mainWindow.webContents.send('frame', frame)
-  // })
+  let aiService = new AIService()
+  aiService.start()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
-    // TODO: stop worker
+    aiService.stop()
+
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
