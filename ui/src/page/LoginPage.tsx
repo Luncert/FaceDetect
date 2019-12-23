@@ -1,24 +1,20 @@
 import React, { Component } from 'react';
-import { Input, Button, Checkbox, Loader, Dimmer } from 'semantic-ui-react';
+import { Input, Button, Loader, Dimmer } from 'semantic-ui-react';
 import { toast } from 'react-toastify';
 import './LoginPage.css';
 import Axios from '../Axios';
 import API from '../API';
-
-interface Props {
-    afterSignin: (role: string) => void
-}
 
 interface State {
     focusPwInput: boolean
     loading: boolean
 }
 
-export default class LoginPage extends Component<Props, State> {
+export default class LoginPage extends Component<any, State> {
     private account: string;
     private password: string;
 
-    constructor(props: Props) {
+    constructor(props: any) {
         super(props)
         this.state = {
             focusPwInput: false,
@@ -61,7 +57,11 @@ export default class LoginPage extends Component<Props, State> {
             Axios.post(API.user.signin, data,
                 { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
                 .then((rep) => {
-                    this.props.afterSignin(rep.data.role)
+                    if (rep.data.role === 'Teacher') {
+                        window.location.href = '/user/teacher'
+                    } else {
+                        window.location.href = '/user/student'
+                    }
                 })
                 .catch((err) => {
                     console.log(err)
@@ -125,7 +125,7 @@ export default class LoginPage extends Component<Props, State> {
                                     onBlur={() => this.setState({focusPwInput: false})}
                                     onChange={this.inputPassword.bind(this)}
                                     />
-                        <a style={{float: 'right', cursor: 'pointer'}}>找回密码</a>
+                        <a style={{float: 'right', cursor: 'pointer'}} href='/user/resetPassword'>找回密码</a>
                         <Button primary size='mini' style={{width: 200, marginTop: 20}}
                             onClick={this.verify.bind(this)}>登录</Button>
                     </div>

@@ -1,6 +1,9 @@
 import Axios from "axios";
 import config from './Config.json';
 
-export default Axios.create({
+let axios = Axios.create({
     baseURL: config.server.addr,
-});
+})
+axios.defaults.withCredentials=true
+
+export default axios

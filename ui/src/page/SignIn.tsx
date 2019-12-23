@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Grid, Header, Image, List, Segment, Loader, Dimmer, Modal, Button } from 'semantic-ui-react'
+import { Grid, Header, Image, List, Segment, Loader, Dimmer} from 'semantic-ui-react'
 import { toast } from 'react-toastify';
 import './SignIn.css'
 

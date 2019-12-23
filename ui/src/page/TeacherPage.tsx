@@ -1,5 +1,5 @@
 import React, { Component, ReactElement } from 'react'
-import { Grid, Header, Segment, Image, Icon, List, Label, Button, Modal, Form, Input, Dropdown, Popup, Container, Divider, Accordion } from 'semantic-ui-react'
+import { Grid, Header, Segment, Image, Icon, List, Label, Button, Modal, Form, Input, Dropdown, Popup, Container, Divider, Accordion, Confirm, Select } from 'semantic-ui-react'
 import './TeacherPage.css'
 import Axios from '../Axios'
 import API from '../API'
@@ -47,24 +47,21 @@ interface LeaveSlipProcessResultDto {
     comment: string
 }
 
-interface Props {
-    startSignIn: (courseID: number) => void
-}
-
 interface State {
     leaveSlips: LeaveSlip[],
     courses: Course[],
     createCourse: boolean,
+    deleteCourseIdx: number | null,
     leaveSlipID: number,
     signInList: GetSignInDto[]
 }
 
-export default class TeacherPage extends Component<Props, State> {
+export default class TeacherPage extends Component<any, State> {
 
     private signInID: number | null = null
     private comment: string
 
-    constructor(props: Props) {
+    constructor(props: any) {
         super(props)
         this.state = {
             leaveSlips: [
@@ -73,6 +70,7 @@ export default class TeacherPage extends Component<Props, State> {
             ],
             courses: [{id: 1, name: 'English'}],
             createCourse: false,
+            deleteCourseIdx: null,
             leaveSlipID: -1,
             signInList: []
         }
@@ -104,7 +102,7 @@ export default class TeacherPage extends Component<Props, State> {
     }
 
     startSignIn(courseID: number) {
-        this.props.startSignIn(courseID)
+        window.location.href = `/user/course/signIn?courseID=${courseID}`
     }
 
     postLeaveSlipComment(leaveSlipID: number, approved: boolean, signInID?: number, comment?: string) {
@@ -132,8 +130,23 @@ export default class TeacherPage extends Component<Props, State> {
             })
     }
 
+    removeCourse(courseIdx: number) {
+        let courseID = this.state.courses[courseIdx].id
+        Axios.delete(API.user.teacher.course.removeCourse(courseID))
+            .then(() => {
+                toast('删除课程成功', { position: toast.POSITION.BOTTOM_LEFT, type: 'success' })
+                delete this.state.courses[courseIdx]
+            })
+            .catch((error) => {
+                toast(`删除课程失败：${error.response.data}`, { position: toast.POSITION.BOTTOM_LEFT, type: 'error' })
+            })
+            .finally(() => {
+                this.setState({deleteCourseIdx: null})
+            })
+    }
+
     render() {
-        const {leaveSlips, courses, createCourse,
+        const {leaveSlips, courses, createCourse, deleteCourseIdx,
             leaveSlipID, signInList} = this.state
         return (
             <div style={{width: '100%'}}>
@@ -155,24 +168,42 @@ export default class TeacherPage extends Component<Props, State> {
                         {/* 课程列表 */}
                         <Grid.Column width={6}>
                             <Segment>
-                                <List divided relaxed animated>
+                                <List divided relaxed>
                                     <List.Header>
                                         <Label style={{backgroundColor: 'white'}}><h3>我的课程</h3></Label>
-                                        <Button icon='add' circular floated='right' primary size='mini' onClick={() => this.setState({createCourse: true})} />
+                                        
+                                        <Button floated='right' primary size='mini' onClick={() => this.setState({createCourse: true})}>新建课程</Button>
                                         <Modal style={{width: 400}} closeOnDimmerClick={false} open={createCourse}>
                                             <Modal.Header>创建课程</Modal.Header>
                                             <Modal.Content>
-                                                <CreateCoursePage onDone={() => this.setState({createCourse: false})}></CreateCoursePage>
+                                                <CreateCoursePage onDone={() => {
+                                                    this.setState({createCourse: false})
+                                                    this.getCourses()
+                                                }}></CreateCoursePage>
                                             </Modal.Content>
                                         </Modal>
+                                        <Confirm
+                                            open={deleteCourseIdx != null}
+                                            header='操作确认'
+                                            content={ deleteCourseIdx != null ? `确认要删除课程${courses[deleteCourseIdx].name}吗？` : '' }
+                                            onCancel={() => this.setState({deleteCourseIdx: null})}
+                                            onConfirm={() => {
+                                                this.removeCourse(deleteCourseIdx)
+                                            }}
+                                            />
                                     </List.Header>
 
-                                    {courses.map((course) =>
+                                    {courses.map((course, idx) =>
                                         <List.Item key={course.id}>
-                                            <List.Icon name='caret right' size='large' verticalAlign='middle' />
-                                            <List.Content verticalAlign='middle'>
-                                                <Popup content='开始签到' trigger={
-                                                    <a onClick={() => this.startSignIn(course.id)}>{course.name}</a>} />
+                                            <List.Content>
+                                            <Popup content='开始签到'
+                                                trigger={
+                                                <List.Content verticalAlign='middle'>
+                                                    <List.Icon name='caret right' size='small' verticalAlign='middle' />
+                                                    <span style={{color: 'teal'}} onClick={() => this.startSignIn(course.id)}>{course.name}</span>
+                                                    <div style={{float: 'right'}} onClick={() => this.setState({deleteCourseIdx: idx})}><Icon name='close' color='red' /></div>
+                                                </List.Content>
+                                            } />
                                             </List.Content>
                                         </List.Item>
                                     )}
@@ -183,27 +214,30 @@ export default class TeacherPage extends Component<Props, State> {
                         <Grid.Column width={6}>
                             <Segment>
                                 <Accordion>
-                                <Label ribbon><h5>待处理假条</h5></Label>
+                                    <Label ribbon><h5>待处理假条</h5></Label>
                                     {leaveSlips.map((leaveSlip, idx) => (
                                         [
                                             <Accordion.Title
-                                                active={leaveSlipID == leaveSlip.id}
+                                                key={`title-${idx}`}
+                                                active={leaveSlipID === leaveSlip.id}
                                                 onClick={() => {
                                                     this.signInID = null
                                                     this.comment = ''
-                                                    this.setState({leaveSlipID: leaveSlipID == leaveSlip.id ? -1 : leaveSlip.id})}
+                                                    this.setState({leaveSlipID: leaveSlipID === leaveSlip.id ? -1 : leaveSlip.id})}
                                                 }>
                                                 <Icon name='dropdown' />
                                                 <Popup content='查看详细信息' trigger={
-                                                    <a>
-                                                        <a style={{color: 'teal'}}>
+                                                    <div>
+                                                        <span style={{color: 'teal'}}>
                                                             {`${leaveSlip.studentID} - ${leaveSlip.studentName}`}
-                                                        </a>
+                                                        </span>
                                                         <span style={{float: 'right'}}>{leaveSlip.createTime}2019/11/12-5PM</span>
-                                                    </a>
+                                                    </div>
                                                 } />
                                             </Accordion.Title>,
-                                            <Accordion.Content active={leaveSlipID == leaveSlip.id}
+                                            <Accordion.Content
+                                                key={`content-${idx}`}
+                                                active={leaveSlipID === leaveSlip.id}
                                                 style={{ padding: '5px 10px',
                                                     backgroundColor: 'rgb(100, 150, 220)',
                                                     color: 'white',
@@ -212,7 +246,7 @@ export default class TeacherPage extends Component<Props, State> {
                                                     <Label color='blue'>
                                                         <Icon name='book' />课程名称<Label.Detail>{leaveSlip.courseName}</Label.Detail>
                                                     </Label>
-                                                    <Button disabled={leaveSlip.attachmentUrl == null} as='a' href={leaveSlip.attachmentUrl}
+                                                    <Button disabled={leaveSlip.attachmentUrl === null} as='a' href={leaveSlip.attachmentUrl}
                                                         size='mini' color='facebook' floated='right' circular
                                                         icon='arrow circle down' content='附件'>
                                                     </Button>
@@ -302,12 +336,11 @@ class CreateCoursePage extends Component<CreateCoursePageProps> {
     componentDidMount() {
         Axios.get(API.user.teacher.getStudents)
             .then((rep) => {
-                let students: {[key: string]: Student} = {}
                 for (let s of (rep.data as Student[])) {
-                    students[s.id] = s
+                    this.students[s.id] = s
                     this.avaliableStudents.add(s.id)
                 }
-                this.setState({students: students})
+                this.forceUpdate()
             })
             .catch(() => {
                 toast('获取学生列表失败', { position: toast.POSITION.BOTTOM_LEFT, type: 'error' })
@@ -338,7 +371,7 @@ class CreateCoursePage extends Component<CreateCoursePageProps> {
                 </Form.Field>
                 <Form.Field>
                     <label>选择学生</label>
-                    <Dropdown fluid selection onChange={(_, data) => this.addStudent(data.value as string)}
+                    <Select fluid onChange={(_, data) => this.addStudent(data.value as string)}
                         options={
                             (() => {
                                 let tmp: any = []
@@ -360,7 +393,7 @@ class CreateCoursePage extends Component<CreateCoursePageProps> {
                                     tmp.push(
                                         <List.Item key={sid}>
                                             <List.Content floated='right'>
-                                                <a onClick={() => this.removeStudent(sid)}><Icon name='remove' color='red' /></a>
+                                                <span onClick={() => this.removeStudent(sid)}><Icon name='remove' color='red' /></span>
                                             </List.Content>
                                             <List.Icon name='user' size='large' verticalAlign='middle' />
                                             <List.Content>{this.students[sid].name}</List.Content>

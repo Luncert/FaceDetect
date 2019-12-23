@@ -41,3 +41,15 @@ html, body, #root {
 .scroller::-webkit-scrollbar-track {
   background-color: rgba(0, 0, 0, 0);
 }
+
+.App-Background {
+  position: absolute;
+  width: calc(100% + 10px);
+  height: calc(100% + 10px);
+  top: -5px;
+  left: -5px;
+  background-image: url('./res/bg.png');
+  background-size: cover;
+  filter: blur(3px);
+  z-index: -1;
+}
