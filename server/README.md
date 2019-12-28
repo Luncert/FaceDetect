@@ -52,15 +52,15 @@ GET ```/user/teacher/leaveSlips```
 
 #### 2.处理假条
 
-POST ```/user/teacher/leaveSlip:{leaveSlipID}```
+PUT ```/user/teacher/leaveSlip:{leaveSlipID}```
 
 ##### Body
 
 ```json
 {
-	"approval": <Boolean>,
-    "signInID": <Long>,
-    "comment": <String>
+	"approved": <Boolean>,
+	"signInID": <Long>,
+	"comment": <String>
 }
 ```
 
@@ -264,7 +264,7 @@ multipart files:
 
 * date: ```<String>```
 * content: ```<String>```
-* attachment: ```<String>```
+* attachment: ```<File>```
 
 #### 6.获取提交的请假信息
 

@@ -3,9 +3,12 @@ package org.luncert.facedetect.controller;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.luncert.facedetect.dto.*;
+import org.luncert.facedetect.exception.InvalidRequestParamException;
 import org.luncert.facedetect.model.*;
 import org.luncert.facedetect.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -73,11 +76,14 @@ public class StudentController {
     }
 
     @PostMapping("/course:{courseID}/leaveSlip")
-    public void applyForLeave(Authentication authentication,
+    public ResponseEntity applyForLeave(Authentication authentication,
                               @PathVariable("courseID") Long courseID,
-                              @RequestParam("date") MultipartFile date,
-                              @RequestParam("content") MultipartFile content,
+                              @RequestParam("date") String date,
+                              @RequestParam("content") String content,
                               @RequestParam(value = "attachment", required = false) MultipartFile attachment) throws IOException {
+        if (!courseRepo.existsById(courseID)) {
+            return ResponseEntity.badRequest().body("Invalid courseID.");
+        }
         UserAccount account = ((UserInfo) authentication.getPrincipal()).getAccount();
         String sid = account.getObjectID();
 
@@ -86,13 +92,14 @@ public class StudentController {
         la.setCourseID(courseID);
         la.setState(LeaveSlip.State.UnProcessed);
         la.setCreateTime(System.currentTimeMillis());
-        la.setDate(new String(date.getBytes()));
-        la.setContent(new String(content.getBytes()));
+        la.setDate(date);
+        la.setContent(content);
         if (attachment != null) {
             la.setAttachment(new Attachment(attachment.getOriginalFilename(), attachment.getBytes()));
         }
 
         leaveSlipRepo.save(la);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     @GetMapping("/leaveSlips")

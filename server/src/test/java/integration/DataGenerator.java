@@ -31,7 +31,13 @@ class DataGenerator {
     private CourseRepo courseRepo;
 
     @Autowired
+    private SignInRepo signInRepo;
+
+    @Autowired
     private SignInRecordRepo signInRecordRepo;
+
+    @Autowired
+    private LeaveSlipRepo leaveSlipRepo;
 
     Triple<Student, UserInfo, String> genStudent() {
         Student student = mockContext.generate(Student.class);
@@ -57,7 +63,9 @@ class DataGenerator {
 
     void cleanDatabase() {
         // 先清空CourseRepo再清空StudentRepo：先删除外键约束，才能删除外键父表
+        leaveSlipRepo.deleteAll();
         signInRecordRepo.deleteAll();
+        signInRepo.deleteAll();
         courseRepo.deleteAll();
         studentRepo.deleteAll();
         teacherRepo.deleteAll();

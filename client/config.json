@@ -1,0 +1,16 @@
+{
+    "eventServer": {
+        "host": "localhost",
+        "port": 8901
+    },
+    "events": {
+        "START_TRANSPORT": "transport/start",
+        "STOP_TRANSPORT": "transport/stop",
+        "STOP_SERVICE": "service/stop"
+
+    },
+    "smipc": {
+        "cid": "frame-transport",
+        "chanSz": 10368000
+    }
+}

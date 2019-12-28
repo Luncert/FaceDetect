@@ -136,14 +136,16 @@ public class StudentControllerTest {
                 .andExpect(content().json("[]"));
     }
 
+    // TODO: form and multipart
     @Test
     public void testApplyForLeave() throws Exception {
+        final Course course = courseList.get(0);
         String date = "2016/12/8";
         String content = RandomStringUtils.randomAlphanumeric(1024);
         byte[] attachment = RandomStringUtils.randomAlphanumeric(1024).getBytes();
 
         mockMvc.perform(
-                multipart("/user/student/leaveSlip")
+                multipart("/user/student/course:{0}/leaveSlip", course.getId())
                         .file("date", date.getBytes())
                         .file("content", content.getBytes())
                         .file("attachment", attachment)
