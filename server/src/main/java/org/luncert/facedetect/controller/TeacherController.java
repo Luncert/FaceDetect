@@ -52,12 +52,10 @@ public class TeacherController {
             leaveSlip.setState(LeaveSlip.State.Approved);
             // bind leave slip to SignInRecord
             SignInRecord signInRecord = new SignInRecord();
+            signInRecord.setSignIn(signIn);
             signInRecord.setStudent(student);
             signInRecord.setLeaveSlip(leaveSlip);
             signInRecordRepo.save(signInRecord);
-
-            signIn.getSignInRecords().add(signInRecord);
-            signInRepo.save(signIn);
         } else {
             leaveSlip.setState(LeaveSlip.State.Rejected);
         }

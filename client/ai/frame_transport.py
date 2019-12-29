@@ -76,11 +76,11 @@ class FrameTransport(smipc.Channel):
 
 if __name__ == '__main__':
     import sys
-    import json
 
-    with open('smipc_conf.json', 'rb') as f:
-        conf = f.read().decode('utf8')
-    conf = json.loads(conf)
+    conf = {
+        "cid": "frame-transport",
+        "chanSz": 10368000
+    }
 
     if sys.argv[1].find('-s') == 0:
         print('Start as sender')

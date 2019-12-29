@@ -8,11 +8,12 @@ import { Router, Route } from 'react-router';
 import { createBrowserHistory } from 'history'
 import { ToastContainer } from 'react-toastify';
 import TeacherPage from './page/TeacherPage';
-import SignInPage from './page/SignIn';
+import SignInPage from './page/SignInPage';
 import LoginPage from './page/LoginPage';
 import StudentPage from './page/StudentPage';
 import ResetPasswordPage from './page/ResetPasswordPage';
 import 'react-toastify/dist/ReactToastify.css';
+import SignInRecordPage from './page/SignInRecordPage';
 
 ReactDOM.render(
     <Router history={createBrowserHistory()}>
@@ -28,6 +29,7 @@ ReactDOM.render(
             <Route path='/user/teacher' component={TeacherPage} />
             <Route path='/user/student' component={StudentPage} />
             <Route path='/user/course/signIn' component={SignInPage} />
+            <Route path='/user/course/signInRecord' component={SignInRecordPage} />
             <ToastContainer autoClose={false} />
         </div>
     </Router>, document.getElementById('root'));

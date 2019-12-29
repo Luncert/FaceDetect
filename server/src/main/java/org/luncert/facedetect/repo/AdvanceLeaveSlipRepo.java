@@ -39,12 +39,13 @@ public class AdvanceLeaveSlipRepo {
         return ret;
     }
 
+    @SuppressWarnings("unchecked")
     public List<TeacherGetLeaveSlipDto> findByTeacherID(Long tid) {
         String sql = "SELECT l.id, c.id courseID, c.name, l.studentID," +
                 " (SELECT name FROM student WHERE id=l.studentID)," +
                 " state, create_Time, date, content, attachment_name" +
                 " FROM leave_slip l LEFT JOIN course c ON l.courseID=c.id" +
-                " WHERE c.teacherID=" + tid;
+                " WHERE l.state=0 AND c.teacherID=" + tid; // 0=unprocessed
         List<Object[]> result = entityManager.createNativeQuery(sql).getResultList();
         List<TeacherGetLeaveSlipDto> ret = new ArrayList<>();
         for (Object[] column : result) {

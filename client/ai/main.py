@@ -1,50 +1,46 @@
 from event_server import EventServer, on_event
 from frame_transport import FrameTransport
 from threading import Thread, Event
+from face_api import process
 import cv2
 import smipc
 import json
 import time
+import requests
+
 
 E_HEALTH = 'service/health'
 E_TRANSPORT_START = 'transport/start'
 E_TRANSPORT_STOP = 'transport/stop'
 E_SERVICE_STOP = 'service/stop'
+API_SIGN_IN = 'user/signIn'
+API_GET_STUDENTS = '/user/teacher/students'
 
 t_thread = None
 t_event = None
 
 
-def process(frame):
-    face_cascade = cv2.CascadeClassifier('./data/haarcascade_frontalface_default.xml')
-    face_rects = face_cascade.detectMultiScale(frame, scaleFactor=1.2, minNeighbors=3, minSize=(50, 50))
-    if len(face_rects) > 0:
-        for (x, y, w, h) in face_rects:
-            cv2.rectangle(frame, (x, y), (x + h, y + w), (0, 255, 0), 2)
-            # predict emotion
-            # face = frame[x:x + w, y:y + h]
-            # face_gray = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
-            # resized_img = cv2.resize(face_gray, (48, 48), interpolation=cv2.INTER_AREA)
-            # # cv2.imwrite(str(index)+'.png', resized_img)
-            # image = resized_img.reshape(1, 1, 48, 48)
-            # list_of_list = model.predict(image, batch_size=1, verbose=1)
-            # res = [prob for lst in list_of_list for prob in lst]
-            # emotion = ['愤怒', '恐惧', '高兴', '伤心', '惊喜', '平静']
-            # idx = res.index(max(res))
-            # return emotion[idx], res[idx]
-    return frame
-
-
-def transport(smipc_conf):
-    # load basic info from server
-
+def transport(conf):
     global t_event
     source = cv2.VideoCapture('demo.mp4')
-    with FrameTransport(smipc_conf['cid'], smipc.CHAN_W, smipc_conf['chanSz']) as ft:
+    with FrameTransport(conf['cid'], smipc.CHAN_W, conf['chanSz']) as ft:
+        # load basic info from server
+        session = requests.session()
+        rep = session.post(conf['server'] + API_SIGN_IN, data=conf['userInfo'])
+        if rep.status_code != 200:
+            raise Exception('Auth failed, status code=%d.' % rep.status_code)
+        rep = session.get(conf['server'] + API_GET_STUDENTS)
+        if rep.status_code != 200:
+            raise Exception('Failed to get student list, status code=%d.' % rep.status_code)
+        # id name
+        student_list = json.loads(rep.content)
+        # 识别出名字，告诉前端
+        # main process
         try:
-            while not t_event.isSet() and source.isOpened():
-                # TODO: source.isOpened() 好像不起作用，会抛出异常
-                _, frame = source.read()
+            while not t_event.isSet():
+                ok, frame = source.read()
+                if not ok:
+                    break
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
                 frame = process(frame)
                 time.sleep(0.025)

@@ -6,8 +6,6 @@ import API from '../API'
 import { toast } from 'react-toastify'
 import config from '../Config.json';
 
-// TODO: time
-
 interface LeaveSlip {
     id: number,
     courseID: number,
@@ -54,6 +52,7 @@ interface State {
     createCourse: boolean,
     deleteCourseIdx: number | null,
     leaveSlipID: number,
+    selectCourse: boolean,
     signInList: GetSignInDto[]
 }
 
@@ -65,14 +64,12 @@ export default class TeacherPage extends Component<any, State> {
     constructor(props: any) {
         super(props)
         this.state = {
-            leaveSlips: [
-                {id: 0, courseID: 1, courseName: 'English', studentID: '2016220204015', studentName: '李经纬', state: 'UnProcess', createTime: 0, date: '周二下午', content: '病假', attachmentUrl: null},
-                {id: 1, courseID: 1, courseName: 'English', studentID: '2016220204015', studentName: '李经纬', state: 'UnProcess', createTime: 0, date: '周二下午', content: '病假', attachmentUrl: 'https://www.baidu.com'},
-            ],
+            leaveSlips: [],
             courses: [{id: 1, name: 'English'}],
             createCourse: false,
             deleteCourseIdx: null,
             leaveSlipID: -1,
+            selectCourse: false,
             signInList: []
         }
     }
@@ -102,18 +99,16 @@ export default class TeacherPage extends Component<any, State> {
         this.getCourses()
     }
 
-    startSignIn(courseID: number) {
-        window.location.href = `/user/course/signIn?courseID=${courseID}`
-    }
-
-    postLeaveSlipComment(leaveSlipID: number, approved: boolean, signInID?: number, comment?: string) {
+    postLeaveSlipComment(leaveSlipID: number, approved: boolean, onSuccess?: () => void, signInID?: number, comment?: string) {
         let data: LeaveSlipProcessResultDto = {
             approved: approved,
             signInID: signInID || -1,
             comment: comment
         }
-        Axios.post(API.user.teacher.postLeaveSlipResult(leaveSlipID), data)
+        console.log(onSuccess)
+        Axios.put(API.user.teacher.postLeaveSlipResult(leaveSlipID), data)
             .then(() => {
+                onSuccess()
                 toast('提交假条处理结果成功', { position: toast.POSITION.BOTTOM_LEFT, type: 'success' })
             })
             .catch(() => {
@@ -153,7 +148,7 @@ export default class TeacherPage extends Component<any, State> {
 
     render() {
         const {leaveSlips, courses, createCourse, deleteCourseIdx,
-            leaveSlipID, signInList} = this.state
+            selectCourse, leaveSlipID, signInList} = this.state
         return (
             <div style={{width: '100%'}}>
                 <Segment className='Header'>
@@ -163,8 +158,7 @@ export default class TeacherPage extends Component<any, State> {
                                 <Header as='h3' className='Title' style={{color: 'rgb(8, 89, 187)'}}>Face Detect</Header>
                             </Grid.Column>
                             <Grid.Column floated='right' textAlign='right'>
-                                <Image src='https://react.semantic-ui.com/images/wireframe/square-image.png' avatar />
-                                <span>Luncert</span>
+                                <Image src='https://react.semantic-ui.com/images/avatar/large/matthew.png' avatar />
                             </Grid.Column>
                         </Grid.Row>
                     </Grid>
@@ -177,8 +171,9 @@ export default class TeacherPage extends Component<any, State> {
                                 <List divided relaxed>
                                     <List.Header>
                                         <Label style={{backgroundColor: 'white'}}><h3>我的课程</h3></Label>
-                                        
-                                        <Button floated='right' primary size='mini' onClick={() => this.setState({createCourse: true})}>新建课程</Button>
+
+                                        <Button floated='right' primary size='mini' style={{marginTop: 3}}
+                                            onClick={() => this.setState({createCourse: true})}>新建课程</Button>
                                         <Modal style={{width: 400}} closeOnDimmerClick={false} open={createCourse}>
                                             <Modal.Header>创建课程</Modal.Header>
                                             <Modal.Content>
@@ -188,6 +183,12 @@ export default class TeacherPage extends Component<any, State> {
                                                 }}></CreateCoursePage>
                                             </Modal.Content>
                                         </Modal>
+
+                                        <Select style={{verticalAlign: 'top', marginBottom: 10}}
+                                            placeholder='选择课程开始签到'
+                                            onChange={(_, data) => {this.props.history.push({pathname: '/user/course/signIn', state: {courseID: data.value}})}}
+                                            options={courses.map((course, idx) => ({key: idx, value: course.id, text: course.name}))} />
+
                                         <Confirm
                                             open={deleteCourseIdx != null}
                                             header='操作确认'
@@ -199,14 +200,16 @@ export default class TeacherPage extends Component<any, State> {
                                             />
                                     </List.Header>
 
+
                                     {courses.map((course, idx) =>
                                         <List.Item key={course.id}>
                                             <List.Content>
-                                            <Popup content='开始签到'
+                                            <Popup content='查看签到记录'
                                                 trigger={
                                                 <List.Content verticalAlign='middle'>
                                                     <List.Icon name='caret right' size='small' verticalAlign='middle' />
-                                                    <span style={{color: 'teal', cursor: 'pointer'}} onClick={() => this.startSignIn(course.id)}>{course.name}</span>
+                                                    <span style={{color: 'teal', cursor: 'pointer'}}
+                                                        onClick={() => this.props.history.push({pathname: '/user/course/signInRecord', state: {courseID: course.id}})}>{course.name}</span>
                                                     <div style={{float: 'right'}} onClick={() => this.setState({deleteCourseIdx: idx})}><Icon name='close' color='red' /></div>
                                                 </List.Content>
                                             } />
@@ -235,7 +238,7 @@ export default class TeacherPage extends Component<any, State> {
                                                 <span style={{color: 'teal'}}>
                                                     {`${leaveSlip.studentID} - ${leaveSlip.studentName}`}
                                                 </span>
-                                                <span style={{float: 'right'}}>{this.parseTimestamp(leaveSlip.createTime)}</span>
+                                                <span style={{float: 'right', color: 'gray'}}>{this.parseTimestamp(leaveSlip.createTime)}</span>
                                             </Accordion.Title>,
                                             <Accordion.Content
                                                 key={`content-${idx}`}
@@ -280,13 +283,16 @@ export default class TeacherPage extends Component<any, State> {
                                                         onChange={(_, data) => this.signInID = (data.value as number)}
                                                         style={{backgroundColor: 'rgb(120, 180, 255)'}}
                                                         options={signInList.map(
-                                                            (s) => ({key: s.id, value: s.id, text: `${s.startTime}到${s.endTime}`}))} />
+                                                            (s) => ({key: s.id, value: s.id, text: `${this.parseTimestamp(s.startTime)}`}))} />
                                                 </Container>
                                                 {/* 按钮 */}
                                                 <Container textAlign='right' style={{marginTop: 10}}>
                                                     <Button size='mini' color='red' onClick={() => this.postLeaveSlipComment(leaveSlip.id, false)}>回绝</Button>
                                                     <Button size='mini' primary onClick={() => {
-                                                        this.postLeaveSlipComment(leaveSlip.id, true, this.signInID, this.comment)
+                                                        this.postLeaveSlipComment(leaveSlip.id, true, () => {
+                                                                this.state.leaveSlips.splice(idx, 1)
+                                                                this.forceUpdate()
+                                                            }, this.signInID, this.comment)
                                                         delete leaveSlips[idx]
                                                         this.forceUpdate()
                                                     }}>批准</Button>

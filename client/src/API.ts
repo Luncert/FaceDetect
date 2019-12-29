@@ -13,6 +13,9 @@ export default ({
             }
         },
         student: {
+             getProfile: '/user/student/profile',
+             getCourseInfo: '/user/student/courses',
+             applyLeaveSlip: (courseID: number) => `/user/student/course:${courseID}/leaveSlip`
         }
     }
 })
