@@ -1,5 +1,5 @@
 {
     "server": {
-        "addr": "http://localhost:8080"
+        "addr": "http://192.168.3.65:8080"
     }
 }

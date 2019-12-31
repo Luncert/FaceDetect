@@ -28,24 +28,33 @@
   <script>
     const ipcRenderer = require('electron').ipcRenderer
 
-    function startFrameTransport() {
-        let canvas = document.getElementById('video_canvas')
-        canvas.width = 800
-        canvas.height = 600
-        let ctx = canvas.getContext('2d')
+    const PACKET_FRAME = 1
+    const PACKET_TEXT = 2
 
-        ipcRenderer.send('/ai/frameTransport/start')
-        
-        ipcRenderer.on('/ai/frameTransport/stream', (evt, frame) => {
-            let img = new ImageData(Uint8ClampedArray.from(frame.data), frame.width, frame.height)
-            ctx.putImageData(img, 0, 0)
-        })
+    function startDataTransport(settings, onData) {
+      let canvas = document.getElementById('video_canvas')
 
-        setTimeout(() => stopFrameTransport(), 10000)
+      let frameSize = settings.frameSize
+      canvas.width = frameSize.width
+      canvas.height = frameSize.height
+
+      let ctx = canvas.getContext('2d')
+
+      ipcRenderer.send('/ai/dataTransport/start', settings)
+
+      ipcRenderer.on('/ai/dataTransport/stream', (evt, packet) => {
+        if (packet.type == PACKET_FRAME) {
+          let frame = packet.content
+          let img = new ImageData(Uint8ClampedArray.from(frame.data), frame.width, frame.height)
+          ctx.putImageData(img, 0, 0)
+        } else {
+          onData(JSON.parse(packet.content))
+        }
+      })
     }
 
-    function stopFrameTransport() {
-      ipcRenderer.send('/ai/frameTransport/stop')
+    function stopDataTransport() {
+      ipcRenderer.send('/ai/dataTransport/stop')
     }
   </script>
 </head>

@@ -4,12 +4,21 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+INT_SZ = 4
+
+
+# little endian
+def bytes_int(buf, start_pos, sz):
+    v = 0
+    for i in range(sz):
+        v += (buf[start_pos] << (i * 8))
+        start_pos += 1
+    return v
+
 
 def on_event(event_name):
     def inner(func):
-        if event_name not in EventServer.listeners:
-            EventServer.listeners[event_name] = []
-        EventServer.listeners[event_name].append(func)
+        EventServer.listeners[event_name] = func
     return inner
 
 
@@ -52,48 +61,53 @@ class EventServer(object):
         logger.info("EventServer stopped.")
         s.close()
 
-    @staticmethod
-    def __receive_event(cli):
+    def __receive_event(self, cli):
         # read event name's size
-        ret = cli.recv(1)
-        if len(ret) == 0:
+        buf = self.__read_n(cli, INT_SZ)
+        if len(buf) == 0:
             return None
-        sz = ord(ret)
-        if sz > 0:
+        name_sz = bytes_int(buf, 0, INT_SZ)
+        if name_sz > 0:
             # read event name
-            ret = cli.recv(sz)
-            if len(ret) == 0:
-                logger.debug("Opposite end closed.")
-                return None
-            elif len(ret) != sz:
-                logger.error("Failed to read event name, expected sz=%d, read=%d." % (sz, len(ret)))
-                return None
-            evt_name = ret.decode('utf-8')
+            evt_name = self.__read_n(cli, name_sz).decode('utf-8')
         else:
             logger.error("Event name size should be positive, but 0 is read.")
             return None
         # read message size
-        ret = cli.recv(1)
-        if len(ret) == 0:
+        buf = self.__read_n(cli, INT_SZ)
+        if len(buf) == 0:
             return None
-        sz = ord(ret)
+        msg_sz = bytes_int(buf, 0, INT_SZ)
         msg = ''
-        if sz > 0:
+        if msg_sz > 0:
             # read message
-            ret = cli.recv(sz)
-            if len(ret) == 0:
-                logger.debug("Opposite end closed.")
-                return None
-            elif len(ret) != sz:
-                logger.error("Failed to read message, expected sz=%d, read=%d." % (sz, len(ret)))
-                return None
-            msg = ret.decode('utf-8')
+            msg = self.__read_n(cli, msg_sz).decode('utf-8')
         return Event(evt_name, msg)
+
+    @staticmethod
+    def __read_n(cli, n):
+        data = bytearray(0)
+        while n > 0:
+            # TODO: set timeout
+            tmp = cli.recv(n)
+            if len(tmp) == 0:
+                break
+            data.extend(tmp)
+            n -= len(tmp)
+        return data
 
     @staticmethod
     def __on_event(evt):
         logger.debug('Event{name=%s, message=%s}' % (evt.name, evt.msg))
         if evt.name in EventServer.listeners:
-            listeners = EventServer.listeners[evt.name]
-            for listener in listeners:
-                listener(evt.msg)
+            listener = EventServer.listeners[evt.name]
+            listener(evt.msg)
+
+
+@on_event('test-event')
+def __test_event_listener(msg):
+    print(msg)
+
+
+if __name__ == '__main__':
+    EventServer('localhost', 10901).start('stop')

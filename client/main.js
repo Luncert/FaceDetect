@@ -19,7 +19,7 @@ function createWindow () {
 
   // and load the index.html of the app.
   // mainWindow.loadFile('public/index.html')
-  mainWindow.loadURL('http://localhost:3000/user/course/signIn?courseID=62')
+  mainWindow.loadURL('http://localhost:3000/user/course/signIn')
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools()

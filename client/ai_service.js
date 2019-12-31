@@ -1,21 +1,54 @@
 const conf = require('./config.json')
 const net = require('net')
-const { parentPort, Worker } = require('worker_threads')
+const { Worker } = require('worker_threads')
 const ipcMain = require('electron').ipcMain
 
-class EventClient {
-    connect(host, port) {
+const INT_SZ = 4
+
+class AIService {
+    socketClosed = false
+
+    start() {
+        // TODO: create process to run event server
+
         this.cli = net.Socket()
-        this.cli.connect(port, host, () => {
+
+        this.cli.connect(conf.eventServer.port, conf.eventServer.host, () => {
             console.debug('Connected to EventServer')
+
+            ipcMain.on('/ai/dataTransport/start', (evt, settings) => {
+                settings = Object.assign(settings, conf.smipc)
+                this._emitEvent(conf.events.START_TRANSPORT, JSON.stringify(settings))
+    
+                // ft thread will exit gracefully when transport done.
+                let dt = new Worker('./data_transport.js')
+                dt.on('message', (packet) => evt.sender.send('/ai/dataTransport/stream', packet))
+            })
+    
+            ipcMain.on('/ai/dataTransport/stop', (evt, msg) => {
+                this._emitEvent(conf.events.STOP_TRANSPORT)
+            })
         })
+
+        this.cli.on('error', (err) => {
+            console.log('Error:', err.message)
+        })
+
         this.cli.on('close', () => {
             console.debug('Disconnected from EventServer')
+
+            this.socketClosed = true
         })
     }
 
-    emit(evtName, message) {
-        if (!this.cli) {
+    stop() {
+        if (!this.socketClosed) {
+            this._emitEvent(conf.events.STOP_SERVICE)
+        }
+    }
+
+    _emitEvent(evtName, message) {
+        if (this.socketClosed) {
             console.error('EventClient is not active.')
             return
         }
@@ -23,40 +56,29 @@ class EventClient {
             console.error('Invalid event name, must be non-empty.')
             return
         }
-        this.cli.write(String.fromCharCode(evtName.length))
+
+        message = message || ''
+
+        let buf = new Uint8Array(INT_SZ)
+        // send event name size
+        this._parseIntToBytes(evtName.length, buf, 0, INT_SZ)
+        this.cli.write(buf)
+        // send event name
         this.cli.write(evtName)
-        if (message) {
-            this.cli.write(String.fromCharCode(message.length))
-            this.cli.write(message)
-        } else {
-            this.cli.write(String.fromCharCode(0))
+
+        // send message size
+        buf = new Uint8Array(INT_SZ)
+        this._parseIntToBytes(message.length, buf, 0, INT_SZ)
+        this.cli.write(buf)
+        // send message
+        this.cli.write(message)
+    }
+
+    _parseIntToBytes(v, buf, startPos, sz) {
+        for (let i = 0; v > 0 && i < sz; i++, startPos++) {
+            buf[startPos] = v & 0xff
+            v >>= 8
         }
-    }
-
-    // No close method, socket will be closed automatically
-}
-
-class AIService {
-    start() {
-        // TODO: create process to run event server
-        this.evtCli = new EventClient()
-        this.evtCli.connect(conf.eventServer.host, conf.eventServer.port)
-
-        ipcMain.on('/ai/frameTransport/start', (evt, msg) => {
-            this.evtCli.emit(conf.events.START_TRANSPORT, JSON.stringify(conf.smipc))
-
-            // ft thread will exit gracefully when transport done.
-            let ft = new Worker('./frame_transport.js')
-            ft.on('message', (frame) => evt.sender.send('/ai/frameTransport/stream', frame))
-        })
-
-        ipcMain.on('/ai/frameTransport/stop', (evt, msg) => {
-            this.evtCli.emit(conf.events.STOP_TRANSPORT)
-        })
-    }
-
-    stop() {
-        this.evtCli.emit(conf.events.STOP_SERVICE)
     }
 }
 

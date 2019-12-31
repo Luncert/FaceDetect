@@ -1,5 +1,6 @@
 package org.luncert.facedetect.controller;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.luncert.facedetect.dto.GetSignInDto;
 import org.luncert.facedetect.exception.InvalidRequestParamException;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,10 +71,7 @@ public class SignInController {
     public ResponseEntity signIn(@PathVariable("courseID") long cid,
                                  @PathVariable("signInID") long signInID,
                                  @PathVariable("studentID") String studentID, boolean beLate) throws InvalidRequestParamException {
-        Student student = studentRepo.findById(studentID)
-                .orElseThrow(() -> new InvalidRequestParamException("Invalid student id."));
-
-        if (signInRecordRepo.findBySignInIdAndStudentID(signInID, student.getId()).isPresent()) {
+        if (signInRecordRepo.findBySignInIdAndStudentID(signInID, studentID).isPresent()) {
             return ResponseEntity.badRequest().body("Specified student has been sign in.");
         }
 
@@ -80,6 +79,9 @@ public class SignInController {
         if (signIn.getCourseID() != cid) {
             return ResponseEntity.badRequest().body("Invalid courseID.");
         }
+
+        Student student = studentRepo.findById(studentID)
+                .orElseThrow(() -> new InvalidRequestParamException("Invalid student id."));
 
         SignInRecord signInRecord = new SignInRecord();
         signInRecord.setCreateTime(System.currentTimeMillis());
@@ -89,6 +91,64 @@ public class SignInController {
         signInRecordRepo.save(signInRecord);
 
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    // beLate is not allowed there
+    @PutMapping("/signIn:{signInID}/students")
+    public ResponseEntity batchSignIn(@PathVariable("courseID") long cid,
+                                      @PathVariable("signInID") long signInID,
+                                      @RequestBody List<String> studentIdList) {
+        JSONObject result = new JSONObject();
+        result.put("result", "unprocessed");
+
+        Optional<SignIn> optionalSignIn = signInRepo.findById(signInID);
+        if (!optionalSignIn.isPresent()) {
+            result.put("description", "Invalid sign in id.");
+            return ResponseEntity.badRequest().body(result);
+        }
+
+        SignIn signIn = optionalSignIn.get();
+        if (signIn.getCourseID() != cid) {
+            result.put("description", "Invalid course id.");
+            return ResponseEntity.badRequest().body(result);
+        }
+
+        JSONArray failureRecords = new JSONArray();
+        long currentTime = System.currentTimeMillis();
+
+        result.put("result", "processed");
+        for (String studentID : studentIdList) {
+            if (signInRecordRepo.findBySignInIdAndStudentID(signInID, studentID).isPresent()) {
+                JSONObject failureReason = new JSONObject();
+                failureReason.put("studentID", studentID);
+                failureReason.put("failureReason", "Specified student has been sign in.");
+                failureRecords.add(failureReason);
+            } else {
+                Optional<Student> optionalStudent = studentRepo.findById(studentID);
+                if (!optionalStudent.isPresent()) {
+                    JSONObject failureReason = new JSONObject();
+                    failureReason.put("studentID", studentID);
+                    failureReason.put("failureReason", "Invalid student id.");
+                    failureRecords.add(failureReason);
+                } else {
+                    Student student = optionalStudent.get();
+
+                    SignInRecord signInRecord = new SignInRecord();
+                    signInRecord.setCreateTime(currentTime);
+                    signInRecord.setSignIn(signIn);
+                    signInRecord.setStudent(student);
+                    signInRecord.setBeLate(false);
+                    signInRecordRepo.save(signInRecord);
+                }
+            }
+        }
+
+        if (failureRecords.isEmpty()) {
+            return ResponseEntity.ok(result);
+        } else {
+            result.put("external", failureRecords);
+            return ResponseEntity.badRequest().body(result);
+        }
     }
 
     @PutMapping("/signIn:{signInID}/stop")
