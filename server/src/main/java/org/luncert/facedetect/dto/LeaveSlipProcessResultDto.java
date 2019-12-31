@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LeaveSlipProcessResultDto {
 
-    private boolean approval;
+    private boolean approved;
 
     private long signInID;
 

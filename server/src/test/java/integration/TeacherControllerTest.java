@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.tuple.Triple;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,6 +91,11 @@ public class TeacherControllerTest {
         }
     }
 
+    @After
+    public void cleanDatabase() {
+        dataGenerator.cleanDatabase();
+    }
+
     @Test
     public void testGetLeaveSlipList() throws Exception {
         List<TeacherGetLeaveSlipDto> leaveSlipDtoList = new ArrayList<>();
@@ -101,12 +107,12 @@ public class TeacherControllerTest {
             l.setState(LeaveSlip.State.UnProcessed);
             l.setCreateTime(System.currentTimeMillis());
             l.setDate("2016/12/11");
-            l.setContent(RandomStringUtils.randomAlphabetic(512));
+            l.setContent(RandomStringUtils.randomAlphabetic(255));
             Attachment attachment = new Attachment("test.txt", RandomStringUtils.randomAlphabetic(128).getBytes());
             l.setAttachment(attachment);
             l = leaveSlipRepo.save(l);
 
-            leaveSlipDtoList.add(new TeacherGetLeaveSlipDto(l.getId(), course.getName(), student.getId(), student.getName(),
+            leaveSlipDtoList.add(new TeacherGetLeaveSlipDto(l.getId(), course.getId(), course.getName(), student.getId(), student.getName(),
                     l.getState(), l.getCreateTime(), l.getDate(), l.getContent(),
                     ResourceController.linkLeaveSlipAttachment(l.getId(), "test.txt")));
         }
@@ -148,7 +154,8 @@ public class TeacherControllerTest {
                         .session(session))
                 .andExpect(status().isOk());
 
-        SignInRecord signInRecord = signInRecordRepo.findByStudent(student).orElseThrow(IllegalArgumentException::new);
+        SignInRecord signInRecord = signInRecordRepo.findBySignInIdAndStudentID(signIn.getId(), student.getId())
+            .orElseThrow(IllegalArgumentException::new);
         l = signInRecord.getLeaveSlip();
         Assert.assertNotNull(l);
         Assert.assertEquals(LeaveSlip.State.Approved, l.getState());

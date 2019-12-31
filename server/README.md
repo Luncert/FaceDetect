@@ -20,7 +20,8 @@ ContentType: Application Form Url Encoded
 
 ```json
 {
-    "identified": true
+    "identified": true,
+    "role": "Teacher" // or "Student"
 }
 ```
 
@@ -36,6 +37,7 @@ GET ```/user/teacher/leaveSlips```
 [
     {
         "id": <Long>,
+        "courseID": <Long>,
         "courseName": <String>,
         "studentID": <String>,
         "studentName": <String>,
@@ -50,15 +52,15 @@ GET ```/user/teacher/leaveSlips```
 
 #### 2.处理假条
 
-POST ```/user/teacher/leaveSlip:{leaveSlipID}```
+PUT ```/user/teacher/leaveSlip:{leaveSlipID}```
 
 ##### Body
 
 ```json
 {
-	"approval": <Boolean>,
-    "signInID": <Long>,
-    "comment": <String>
+	"approved": <Boolean>,
+	"signInID": <Long>,
+	"comment": <String>
 }
 ```
 
@@ -165,8 +167,7 @@ GET ```/user/teacher/course:{courseID}/signInList```
     {
         "id": <Long>,
         "startTime": <Long>,
-        "endTime": <Long>,
-        "courseID": <Long>
+        "endTime": <Long>
     }
 ]
 ```
@@ -263,7 +264,7 @@ multipart files:
 
 * date: ```<String>```
 * content: ```<String>```
-* attachment: ```<String>```
+* attachment: ```<File>```
 
 #### 6.获取提交的请假信息
 

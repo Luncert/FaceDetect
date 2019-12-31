@@ -39,27 +39,29 @@ public class AdvanceLeaveSlipRepo {
         return ret;
     }
 
+    @SuppressWarnings("unchecked")
     public List<TeacherGetLeaveSlipDto> findByTeacherID(Long tid) {
-        String sql = "SELECT l.id, c.name, l.studentID," +
-                " (SELECT name FROM student WHERE id=l.studentid)," +
+        String sql = "SELECT l.id, c.id courseID, c.name, l.studentID," +
+                " (SELECT name FROM student WHERE id=l.studentID)," +
                 " state, create_Time, date, content, attachment_name" +
                 " FROM leave_slip l LEFT JOIN course c ON l.courseID=c.id" +
-                " WHERE c.teacherID=" + tid;
+                " WHERE l.state=0 AND c.teacherID=" + tid; // 0=unprocessed
         List<Object[]> result = entityManager.createNativeQuery(sql).getResultList();
         List<TeacherGetLeaveSlipDto> ret = new ArrayList<>();
         for (Object[] column : result) {
             TeacherGetLeaveSlipDto dto = new TeacherGetLeaveSlipDto();
             Long id = ((BigInteger) column[0]).longValue();
             dto.setId(id);
-            dto.setCourseName((String) column[1]);
-            dto.setStudentID((String) column[2]);
-            dto.setStudentName((String) column[3]);
+            dto.setCourseID(((BigInteger) column[1]).longValue());
+            dto.setCourseName((String) column[2]);
+            dto.setStudentID((String) column[3]);
+            dto.setStudentName((String) column[4]);
 
-            dto.setState(LeaveSlip.State.values()[(Integer) column[2]]);
-            dto.setCreateTime(((BigInteger) column[3]).longValue());
-            dto.setDate((String) column[4]);
-            dto.setContent(new String((byte[]) column[5]));
-            dto.setAttachmentUrl(ResourceController.linkLeaveSlipAttachment(id, (String) column[6]));
+            dto.setState(LeaveSlip.State.values()[(Integer) column[5]]);
+            dto.setCreateTime(((BigInteger) column[6]).longValue());
+            dto.setDate((String) column[7]);
+            dto.setContent(new String((byte[]) column[8]));
+            dto.setAttachmentUrl(ResourceController.linkLeaveSlipAttachment(id, (String) column[9]));
 
             ret.add(dto);
         }

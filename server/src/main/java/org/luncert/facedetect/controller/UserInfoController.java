@@ -53,6 +53,7 @@ public class UserInfoController {
   @PostMapping("/teacher")
   public String createTeacher(String name) {
     Teacher teacher = new Teacher();
+    teacher.setName(name);
     teacherRepo.save(teacher);
     UserInfo userInfo = new UserInfo();
     userInfo.setAccount(new UserAccount(String.valueOf(teacher.getId()), UserRole.Teacher));

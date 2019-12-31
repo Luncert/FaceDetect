@@ -1,0 +1,11 @@
+.Avatar {
+    display: block;
+    position: absolute !important;
+    top: 60px; left: 160px;
+}
+
+.InputEnhance {
+    width: 200px;
+    color: gray;
+    margin: 5px 0px;
+}

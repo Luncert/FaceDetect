@@ -14,11 +14,16 @@ public class SignInRecord {
 
   private Long createTime;
 
+  @ManyToOne(cascade = CascadeType.REFRESH)
+  @JoinColumn(name = "sign_in_id", referencedColumnName = "id")
+  private SignIn signIn;
+
   @OneToOne(cascade = CascadeType.REFRESH)
-  @JoinColumn(name = "studentID", referencedColumnName = "id")
+  @JoinColumn(name = "student_id", referencedColumnName = "id")
   private Student student;
 
-  private Boolean beLate = false;
+  @Column(columnDefinition = "tinyint(1)")
+  private Boolean beLate;
 
   @OneToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
   @JoinColumn(name = "leaveSlipID", referencedColumnName = "id")

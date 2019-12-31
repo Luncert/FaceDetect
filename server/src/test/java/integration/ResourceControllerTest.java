@@ -3,6 +3,7 @@ package integration;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Triple;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +47,11 @@ public class ResourceControllerTest {
         Triple<Student, UserInfo, String> triple = dataGenerator.genStudent();
         UserInfo studentAccount = triple.getMiddle();
         session = Util.authorize(mockMvc, studentAccount.getUsername(), triple.getRight());
+    }
+
+    @After
+    public void cleanDatabase() {
+        dataGenerator.cleanDatabase();
     }
 
     @Test

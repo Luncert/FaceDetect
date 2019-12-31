@@ -12,6 +12,8 @@ public class TeacherGetLeaveSlipDto {
 
     private Long id;
 
+    private Long courseID;
+
     private String courseName;
 
     private String studentID;
