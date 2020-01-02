@@ -84,7 +84,7 @@ export default class StudentPage extends Component<any, State> {
 
     parseDate(timestamp: number) {
         let d = new Date(timestamp)
-        return `${d.getFullYear()}年${d.getMonth()}月${d.getDate()}日`
+        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
     }
 
     parseDuration(startTime: number, endTime: number) {
@@ -152,7 +152,7 @@ export default class StudentPage extends Component<any, State> {
                                             </Form.Field>
                                             <div style={{textAlign: 'right'}}>
                                                 <Button color='red' onClick={() => this.setState({applyLeaveSlip: null})}>取消</Button>
-                                                <Button primary onClick={() => this.postLeaveSlip(1)}>提交</Button>
+                                                <Button primary onClick={() => this.postLeaveSlip(applyLeaveSlip)}>提交</Button>
                                             </div>
                                         </Form>
                                     </Modal.Content>

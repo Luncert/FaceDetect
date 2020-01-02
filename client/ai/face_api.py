@@ -31,8 +31,8 @@ mtcnn_config = {
 
 
 def adjust_face_box(raw_shape, face_pos):
-    # if not face_pos:
-    # return None
+    if face_pos is None:
+        return None
 
     x, y, w, h = face_pos
 
@@ -154,7 +154,10 @@ def face_detect_mtcnn(frame):
     pred_name, face_pos = predict.face_recognition_image_nn(
         dataset_emb, names_list, face_detect, face_net, gray)
 
+    if pred_name is None:
+        pred_name = []
+
     face_pos = adjust_face_box(frame.shape, face_pos)
     if face_pos is not None:
         frame = render_frame(frame, face_pos)
-    return frame, [pred_name] if pred_name else []
+    return frame, pred_name

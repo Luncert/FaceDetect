@@ -188,7 +188,7 @@ public class SignInController {
     @DeleteMapping("/signIn:{signInID}")
     public void removeSignIn(@PathVariable("courseID") long cid,
                              @PathVariable("signInID") long signInID) {
-        signInRepo.deleteById(signInID);
         signInRecordRepo.deleteBySignInID(signInID);
+        signInRepo.deleteById(signInID);
     }
 }

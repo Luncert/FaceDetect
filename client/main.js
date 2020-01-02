@@ -19,10 +19,10 @@ function createWindow () {
 
   // and load the index.html of the app.
   // mainWindow.loadFile('public/index.html')
-  mainWindow.loadURL('http://localhost:3000/user/course/signIn')
+  mainWindow.loadURL('http://localhost:3000/user/login')
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 
   let aiService = new AIService()
   aiService.start()

@@ -38,7 +38,7 @@ def get_students(session, server_host, course_id):
     data = rep.content.decode('utf-8')
     student_map = {}
     for student in json.loads(data):
-        student_map[student['name']] = student
+        student_map[student['id']] = student
     return student_map
 
 
@@ -57,8 +57,8 @@ def transport(conf):
         students = get_students(session, server_host, conf['courseID'])
         processed_students = set()
 
-        # detect_algorithm = face_detect_opencv if conf['algorithm'] else face_detect_mtcnn
-        detect_algorithm = face_detect_opencv
+        detect_algorithm = face_detect_opencv if conf['algorithm'] == 'opencv' else face_detect_mtcnn
+        # detect_algorithm = face_detect_opencv
 
         # main process
         try:
@@ -70,18 +70,19 @@ def transport(conf):
                 frame = cv2.resize(frame, (frame_width, frame_height), interpolation=cv2.INTER_AREA)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
                 # detect
-                frame, detected_names = detect_algorithm(frame)
+                frame, detected_ids = detect_algorithm(frame)
                 # send frame
                 dt.send_frame(frame)
                 # do sign in
                 detected_students = []
-                for name in detected_names:
-                    if name in students and name not in processed_students:
-                        detected_students.append(students[name])
-                        processed_students.add(name)
-                if len(detected_students) > 0:
-                    dt.send_text(json.dumps(detected_students))
-                time.sleep(0.025)
+                if len(processed_students) < 2:
+                    for sid in detected_ids:
+                        if sid in students and sid not in processed_students:
+                            detected_students.append(students[sid])
+                            processed_students.add(sid)
+                    if len(detected_students) > 0:
+                        dt.send_text(json.dumps(detected_students))
+                # time.sleep(0.025)
             t_event_2.set()
         finally:
             source.release()

@@ -22,7 +22,7 @@ def face_recognition_image_nn(dataset_emb, names_list, face_detect, face_net,
     if bboxes == [] or landmarks == []:
         # print("-----no face")
         return None, None
-    print("-----image have {} faces".format(len(bboxes)))
+    # print("-----image have {} faces".format(len(bboxes)))
     face_images = image_processing.get_bboxes_image(
         image, bboxes, resize_height, resize_width)
     face_images = image_processing.get_prewhiten_images(face_images)
@@ -51,7 +51,7 @@ def face_recognition_image(model_path, dataset_path, filename, image_path):
     if bboxes == [] or landmarks == []:
         print("-----no face")
         exit(0)
-    print("-----image have {} faces".format(len(bboxes)))
+    # print("-----image have {} faces".format(len(bboxes)))
     face_images = image_processing.get_bboxes_image(
         image, bboxes, resize_height, resize_width)
     face_images = image_processing.get_prewhiten_images(face_images)
@@ -78,7 +78,7 @@ def load_dataset(dataset_path, filename):
     return embeddings, names_list
 
 
-def compare_embadding(pred_emb, dataset_emb, names_list, threshold=0.65):
+def compare_embadding(pred_emb, dataset_emb, names_list, threshold_low=0.75, threshold_high=0.95):
     # 为bounding_box 匹配标签
     pred_num = len(pred_emb)
     dataset_num = len(dataset_emb)
@@ -91,13 +91,21 @@ def compare_embadding(pred_emb, dataset_emb, names_list, threshold=0.65):
                 np.sum(
                     np.square(np.subtract(pred_emb[i, :], dataset_emb[j, :]))))
             dist_list.append(dist)
+        max_value = max(dist_list)
         min_value = min(dist_list)
-        pred_score.append(min_value)
+
+        pred_score.append(max_value)
+        if max_value > threshold_high:
+            pred_name.append(names_list[dist_list.index(max_value)])
+
+        # min_value = min(dist_list)
+        # pred_score.append(min_value)
         # if (min_value > threshold):
         #     pred_name.append('unknow')
         # else:
         #     pred_name.append(names_list[dist_list.index(min_value)])
-        pred_name.append(names_list[dist_list.index(min_value)])
+        # pred_name.append(names_list[dist_list.index(min_value)])
+
     return pred_name, pred_score
 
 

@@ -130,8 +130,8 @@ export default class TeacherPage extends Component<any, State> {
         let courseID = this.state.courses[courseIdx].id
         Axios.delete(API.user.teacher.course.removeCourse(courseID))
             .then(() => {
-                toast('删除课程成功', { position: toast.POSITION.BOTTOM_LEFT, type: 'success' })
-                delete this.state.courses[courseIdx]
+                toast('删除课程成功', { position: toast.POSITION.BOTTOM_LEFT, type: 'success', autoClose: 2000 })
+                this.state.courses.splice(courseIdx, 1)
             })
             .catch((error) => {
                 toast(`删除课程失败：${error.response.data}`, { position: toast.POSITION.BOTTOM_LEFT, type: 'error' })
@@ -143,7 +143,7 @@ export default class TeacherPage extends Component<any, State> {
 
     parseTimestamp(timestamp: number) {
         let d = new Date(timestamp)
-        return `${d.getFullYear()}年${d.getMonth()}月${d.getDate()}日 ${d.getHours() < 12 ? '上午' : '下午'}${d.getHours() % 12}点`
+        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours() < 12 ? '上午' : '下午'}${d.getHours() % 12}点`
     }
 
     render() {
@@ -159,6 +159,7 @@ export default class TeacherPage extends Component<any, State> {
                             </Grid.Column>
                             <Grid.Column floated='right' textAlign='right'>
                                 <Image src='https://react.semantic-ui.com/images/avatar/large/matthew.png' avatar />
+                                <b>张翰林</b>老师
                             </Grid.Column>
                         </Grid.Row>
                     </Grid>
@@ -186,8 +187,11 @@ export default class TeacherPage extends Component<any, State> {
 
                                         <Select style={{verticalAlign: 'top', marginBottom: 10}}
                                             placeholder='选择课程开始签到'
-                                            onChange={(_, data) => {this.props.history.push({pathname: '/user/course/signIn', state: {courseID: data.value}})}}
-                                            options={courses.map((course, idx) => ({key: idx, value: course.id, text: course.name}))} />
+                                            onChange={(_, data) => {
+                                                let course = courses[data.value as number]
+                                                this.props.history.push({pathname: '/user/course/signIn', state: {courseID: course.id, courseName: course.name}})
+                                            }}
+                                            options={courses.map((course, idx) => ({key: idx, value: idx, text: course.name}))} />
 
                                         <Confirm
                                             open={deleteCourseIdx != null}
@@ -200,7 +204,6 @@ export default class TeacherPage extends Component<any, State> {
                                             />
                                     </List.Header>
 
-
                                     {courses.map((course, idx) =>
                                         <List.Item key={course.id}>
                                             <List.Content>
@@ -210,7 +213,7 @@ export default class TeacherPage extends Component<any, State> {
                                                     <List.Icon name='caret right' size='small' verticalAlign='middle' />
                                                     <span style={{color: 'teal', cursor: 'pointer'}}
                                                         onClick={() => this.props.history.push({pathname: '/user/course/signInRecord', state: {courseID: course.id}})}>{course.name}</span>
-                                                    <div style={{float: 'right'}} onClick={() => this.setState({deleteCourseIdx: idx})}><Icon name='close' color='red' /></div>
+                                                    <div style={{float: 'right', cursor: 'pointer'}} onClick={() => this.setState({deleteCourseIdx: idx})}><Icon name='close' color='red' /></div>
                                                 </List.Content>
                                             } />
                                             </List.Content>

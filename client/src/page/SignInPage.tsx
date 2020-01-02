@@ -2,10 +2,24 @@ import React, { Component } from 'react';
 import { Grid, Header, Image, List, Segment, Button, Divider, Modal, Form, Dropdown, Dimmer, Loader, Container, Icon} from 'semantic-ui-react'
 import './SignInPage.css'
 import config from '../Config.json';
+import Axios from '../Axios';
+import API from '../API';
+import { toast } from 'react-toastify'
 
 interface Student {
     id: string
     name: string
+}
+
+interface SignInResult {
+    result: 'processed' | 'unprocessed'
+    description: string
+    external: SignInFailureRecord[]
+}
+
+interface SignInFailureRecord {
+    studentID: string
+    failureReason: string
 }
 
 interface State {
@@ -18,16 +32,19 @@ const VIDEO_SIZE = {
     width: 800,
     height: 600
 }
-const AI_OPTION = ['mtcnn + facenet', 'opencv']
+const AI_OPTION = ['opencv', 'mtcnn + facenet']
 
 export default class SignInPage extends Component<any, State> {
+    private courseID: number
+    private courseName: string
+    private signInID: number | null
     private aiOption: string = AI_OPTION[0]
-    private identifiedStudents: Student[] = [
-        // {id: '2016220204015', name: '李经纬'},
-    ]
+    private identifiedStudents: Student[] = []
 
     constructor(props: any) {
         super(props)
+        this.courseID = this.props.location.state.courseID
+        this.courseName = this.props.location.state.courseName
         this.state = {
             openSettings: false,
             loading: false,
@@ -39,38 +56,66 @@ export default class SignInPage extends Component<any, State> {
         if (this.state.running) {
             (window as any).stopDataTransport()
         }
+        this.stopSignIn()
     }
 
     switch() {
         if (!this.state.running) {
-            this.setState({running: true});
-            (window as any).startDataTransport({
-                algorithm: this.aiOption,
-                frameSize: VIDEO_SIZE,
-                serverHost: config.server.addr,
-                // TODO:
-                userInfo: {
-                    account: 't1',
-                    password: '123456'
-                },
-                courseID: 1
-            }, (data: Student[]) => {
-                console.log(data)
-                for (let s of data) {
-                    this.identifiedStudents.push(s)
-                }
-                // send ajax request
-                // signIn()
-                this.forceUpdate()
-            })
+            // notify server to start sign in
+            Axios.post(API.user.teacher.course.startSignIn(this.courseID))
+                .then((rep) => {
+                    this.setState({running: true});
+                    this.signInID = rep.data.signInID;
+                    console.log(`sign in started, id=${this.signInID}`);
+                    // notify ai service
+                    (window as any).startDataTransport({
+                        algorithm: this.aiOption,
+                        frameSize: VIDEO_SIZE,
+                        serverHost: config.server.addr,
+                        // TODO:
+                        userInfo: {
+                            account: 't1',
+                            password: '123456'
+                        },
+                        courseID:  this.courseID// pass by another prev page
+                    }, (data: Student[]) => {
+                        let studentIds = []
+                        for (let s of data) {
+                            this.identifiedStudents.push(s)
+                            studentIds.push(s.id)
+                        }
+                        // send ajax request
+                        Axios.put(API.user.teacher.course.signInStudents(this.courseID, this.signInID), studentIds)
+                            .catch((error) => {
+                                console.error('签到失败', error.response.data)
+                            })
+                        // signIn()
+                        this.forceUpdate()
+                    });
+                })
+                .catch((error) => {
+                    toast('开始签到失败: ' + error.message, { position: toast.POSITION.BOTTOM_LEFT, type: 'error' })
+                });
         } else {
-            this.setState({running: false});
-            (window as any).stopDataTransport()
+            this.setState({running: false})
+            this.stopSignIn()
         }
     }
 
-    signIn() {
-
+    stopSignIn() {
+        if (this.signInID != null) {
+            (window as any).stopDataTransport();
+            Axios.put(API.user.teacher.course.stopSignIn(this.courseID, this.signInID))
+                .then(() => {
+                    console.log(`sign in stoped`);
+                    toast('结束签到成功', { position: toast.POSITION.BOTTOM_LEFT, type: 'success', autoClose: 2000 })
+                })
+                .catch(() => {
+                    toast('结束签到失败', { position: toast.POSITION.BOTTOM_LEFT, type: 'error' })
+                })
+            this.signInID = null
+            this.identifiedStudents = []
+        }
     }
 
     render() {
@@ -98,8 +143,7 @@ export default class SignInPage extends Component<any, State> {
                     <div className='Container'>
                         <div className='VideoCanvas'>
                             <div style={{position: 'absolute',
-                                width: 30, height: 70,
-                                top: VIDEO_SIZE.height / 2, right: 10,
+                                width: 30, top: VIDEO_SIZE.height / 2, right: 10,
                                 boxSizing: 'border-box',
                                 backgroundColor: 'rgba(0, 0, 0, 0)'}}>
                                 <Button as='div' icon={running ? 'stop' : 'play'} circular primary size='tiny'
@@ -109,6 +153,9 @@ export default class SignInPage extends Component<any, State> {
                                     onClick={() => this.setState({openSettings: true})}></Button>
                                 <Button as='div' icon='search' circular primary size='tiny' disabled={running}
                                     onClick={() => {}}></Button>
+                                <Button as='div' icon='close' circular color='red' size='tiny' disabled={running}
+                                    style={{marginTop: 10}}
+                                    onClick={() => this.props.history.push({pathname: '/user/teacher'})}></Button>
                             </div>
                             <Modal open={openSettings} closeOnDimmerClick={false} style={{width: 500}}>
                                 <Modal.Header>设置</Modal.Header>
@@ -139,7 +186,7 @@ export default class SignInPage extends Component<any, State> {
                             <div style={{textAlign: 'center',
                                 padding: '10px 0px 10px 0px',
                                 borderBottom: '1px solid rgb(180, 180, 180)'}}>
-                                <Header as='h5'>已签到学生列表({this.identifiedStudents.length}/120)</Header>
+                                <Header as='h5'>《{this.courseName}》已签到学生({this.identifiedStudents.length})</Header>
                             </div>
                             <div className='scroller'
                                 style={{position: 'relative', padding: 2,

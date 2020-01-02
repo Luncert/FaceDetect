@@ -45,7 +45,7 @@ export default class SignInRecordPage extends Component<any, State> {
 
     parseDate(timestamp: number) {
         let d = new Date(timestamp)
-        return `${d.getFullYear()}年${d.getMonth()}月${d.getDate()}日`
+        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
     }
 
     parseDuration(startTime: number, endTime: number) {
